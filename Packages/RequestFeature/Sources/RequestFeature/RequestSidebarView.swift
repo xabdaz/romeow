@@ -104,27 +104,23 @@ struct WorkspaceSection: View {
     let send: (RequestSidebarFeature.Action) -> Void
 
     var body: some View {
-        Section {
-            // Root requests (requests yang langsung di workspace, bukan di folder)
-            ForEach(workspace.requests) { request in
-                RequestRow(request: request)
-                    .tag(SidebarItem.request(request.id))
-                    .contextMenu {
-                        Button("Delete") { }
-                    }
-            }
+        // Root requests (requests yang langsung di workspace, bukan di folder)
+        ForEach(workspace.requests) { request in
+            RequestRow(request: request)
+                .tag(SidebarItem.request(request.id))
+                .contextMenu {
+                    Button("Delete") { }
+                }
+        }
 
-            // Folders
-            ForEach(workspace.folders) { folder in
-                FolderDisclosureGroup(
-                    folder: folder,
-                    isExpanded: expandedFolders.contains(folder.id),
-                    selectedItem: selectedItem,
-                    send: send
-                )
-            }
-        } header: {
-            WorkspaceHeader(workspace: workspace)
+        // Folders
+        ForEach(workspace.folders) { folder in
+            FolderDisclosureGroup(
+                folder: folder,
+                isExpanded: expandedFolders.contains(folder.id),
+                selectedItem: selectedItem,
+                send: send
+            )
         }
     }
 }
