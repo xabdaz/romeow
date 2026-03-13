@@ -3,13 +3,16 @@ DerivedData/
 .build/
 Packages/*/.build/
 
-# Xcode
+# Xcode user-specific
 *.xcodeproj/xcuserdata/
 *.xcworkspace/xcuserdata/
 *.xcodeproj/project.xcworkspace/xcuserdata/
 
 # SPM resolved versions (opsional — bisa di-commit jika ingin pin versi)
 # Package.resolved
+
+# SPM generated
+Packages/*/.swiftpm/
 
 # macOS
 .DS_Store

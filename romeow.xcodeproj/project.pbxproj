@@ -6,6 +6,10 @@
 	objectVersion = 77;
 	objects = {
 
+/* Begin PBXBuildFile section */
+		A0B950D32F6404BB0018B652 /* AppFeature in Frameworks */ = {isa = PBXBuildFile; productRef = A0B950D22F6404BB0018B652 /* AppFeature */; };
+/* End PBXBuildFile section */
+
 /* Begin PBXContainerItemProxy section */
 		A0B950A62F63F07F0018B652 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
@@ -52,6 +56,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				A0B950D32F6404BB0018B652 /* AppFeature in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -112,6 +117,7 @@
 			);
 			name = romeow;
 			packageProductDependencies = (
+				A0B950D22F6404BB0018B652 /* AppFeature */,
 			);
 			productName = romeow;
 			productReference = A0B950982F63F07D0018B652 /* romeow.app */;
@@ -195,6 +201,9 @@
 			);
 			mainGroup = A0B9508F2F63F07D0018B652;
 			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+				A0B950D12F6404BB0018B652 /* XCLocalSwiftPackageReference "Packages/AppFeature" */,
+			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = A0B950992F63F07D0018B652 /* Products */;
 			projectDirPath = "";
@@ -563,6 +572,20 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCLocalSwiftPackageReference section */
+		A0B950D12F6404BB0018B652 /* XCLocalSwiftPackageReference "Packages/AppFeature" */ = {
+			isa = XCLocalSwiftPackageReference;
+			relativePath = Packages/AppFeature;
+		};
+/* End XCLocalSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		A0B950D22F6404BB0018B652 /* AppFeature */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = AppFeature;
+		};
+/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = A0B950902F63F07D0018B652 /* Project object */;
 }
