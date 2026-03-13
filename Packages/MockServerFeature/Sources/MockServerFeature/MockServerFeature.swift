@@ -1,4 +1,5 @@
 import ComposableArchitecture
+import Foundation
 import SharedModels
 import AppClients
 
@@ -33,6 +34,8 @@ public struct MockServerFeature {
 
     @Dependency(\.mockServerClient) var mockServerClient
 
+    private enum CancelID { case server }
+
     public init() {}
 
     public var body: some ReducerOf<Self> {
@@ -49,6 +52,7 @@ public struct MockServerFeature {
                         await send(.serverFailed(error.localizedDescription))
                     }
                 }
+                .cancellable(id: CancelID.server, cancelInFlight: true)
 
             case .stopButtonTapped:
                 return .run { send in
@@ -59,6 +63,7 @@ public struct MockServerFeature {
                         await send(.serverFailed(error.localizedDescription))
                     }
                 }
+                .cancellable(id: CancelID.server, cancelInFlight: true)
 
             case let .portChanged(port):
                 state.port = port
