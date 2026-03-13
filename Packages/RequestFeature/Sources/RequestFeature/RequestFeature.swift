@@ -7,18 +7,24 @@ public struct RequestFeature {
 
     @ObservableState
     public struct State: Equatable {
+        public var sidebar: RequestSidebarFeature.State
         public var request: APIRequest
         public var isLoading: Bool
         public var response: APIResponse?
         public var errorMessage: String?
 
-        public init(request: APIRequest = APIRequest()) {
+        public init(
+            sidebar: RequestSidebarFeature.State = RequestSidebarFeature.State(),
+            request: APIRequest = APIRequest()
+        ) {
+            self.sidebar = sidebar
             self.request = request
             self.isLoading = false
         }
     }
 
     public enum Action {
+        case sidebar(RequestSidebarFeature.Action)
         case methodChanged(HTTPMethod)
         case urlChanged(String)
         case headerAdded(key: String, value: String)
@@ -26,6 +32,7 @@ public struct RequestFeature {
         case bodyChanged(String)
         case sendButtonTapped
         case responseReceived(Result<APIResponse, Error>)
+        case requestSelected(RequestItem)
     }
 
     @Dependency(\.urlSessionClient) var urlSessionClient
@@ -33,8 +40,25 @@ public struct RequestFeature {
     public init() {}
 
     public var body: some ReducerOf<Self> {
+        Scope(state: \.sidebar, action: \.sidebar) {
+            RequestSidebarFeature()
+        }
         Reduce { state, action in
             switch action {
+            case .sidebar:
+                return .none
+
+            case let .requestSelected(requestItem):
+                state.request = APIRequest(
+                    id: requestItem.id,
+                    name: requestItem.name,
+                    method: requestItem.method,
+                    url: requestItem.url,
+                    headers: [:],
+                    body: nil
+                )
+                return .none
+
             case let .methodChanged(method):
                 state.request.method = method
                 return .none

@@ -8,18 +8,12 @@
 import SwiftUI
 import ComposableArchitecture
 import AppFeature
-import MockServerFeature
 
 struct ContentView: View {
     let store: StoreOf<AppFeature>
 
     var body: some View {
-        MockServerView(store: store.scope(state: \.mockServer, action: \.mockServer))
-            .toolbar {
-                ToolbarItem(placement: .navigation) {
-                    FeatureSwitcherButton()
-                }
-            }
+        AppView(store: store)
     }
 }
 
