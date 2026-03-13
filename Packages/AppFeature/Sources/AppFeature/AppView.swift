@@ -11,50 +11,15 @@ public struct AppView: View {
     }
 
     public var body: some View {
-        NavigationSplitView {
-            SidebarView(store: store)
-        } detail: {
-            DetailView(store: store)
-        }
-        .navigationSplitViewStyle(.balanced)
-    }
-}
+        Group {
+            switch store.selectedSidebar {
+            case .requestBuilder, .none:
+                // RequestView sudah punya NavigationSplitView dengan sidebar workspace
+                RequestView(store: store.scope(state: \.request, action: \.request))
 
-// MARK: - Sidebar View
-struct SidebarView: View {
-    let store: StoreOf<AppFeature>
-
-    var body: some View {
-        List(selection: Binding(
-            get: { store.selectedSidebar },
-            set: { store.send(.sidebarItemSelected($0)) }
-        )) {
-            Section("Features") {
-                NavigationLink(value: AppFeature.State.SidebarItem.requestBuilder) {
-                    Label("REST API", systemImage: "network")
-                }
-
-                NavigationLink(value: AppFeature.State.SidebarItem.mockServer) {
-                    Label("Mock Server", systemImage: "server.rack")
-                }
+            case .mockServer:
+                MockServerView(store: store.scope(state: \.mockServer, action: \.mockServer))
             }
-        }
-        .listStyle(.sidebar)
-        .frame(minWidth: 180)
-    }
-}
-
-// MARK: - Detail View
-struct DetailView: View {
-    let store: StoreOf<AppFeature>
-
-    var body: some View {
-        switch store.selectedSidebar {
-        case .requestBuilder, .none:
-            RequestView(store: store.scope(state: \.request, action: \.request))
-
-        case .mockServer:
-            MockServerView(store: store.scope(state: \.mockServer, action: \.mockServer))
         }
     }
 }
