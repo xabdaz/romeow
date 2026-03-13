@@ -1,5 +1,5 @@
+import ComposableArchitecture
 import Foundation
-import Dependencies
 import SharedModels
 
 // MARK: - Client
