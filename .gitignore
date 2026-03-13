@@ -1,0 +1,15 @@
+# Build artifacts
+DerivedData/
+.build/
+Packages/*/.build/
+
+# Xcode
+*.xcodeproj/xcuserdata/
+*.xcworkspace/xcuserdata/
+*.xcodeproj/project.xcworkspace/xcuserdata/
+
+# SPM resolved versions (opsional — bisa di-commit jika ingin pin versi)
+# Package.resolved
+
+# macOS
+.DS_Store
