@@ -33,6 +33,7 @@ public struct RequestFeature {
         case sendButtonTapped
         case responseReceived(Result<APIResponse, Error>)
         case requestSelected(RequestItem)
+        case featureSwitcherTapped
     }
 
     @Dependency(\.urlSessionClient) var urlSessionClient
@@ -46,6 +47,10 @@ public struct RequestFeature {
         Reduce { state, action in
             switch action {
             case .sidebar:
+                return .none
+
+            case .featureSwitcherTapped:
+                // Delegated to parent (AppFeature) to handle
                 return .none
 
             case let .requestSelected(requestItem):

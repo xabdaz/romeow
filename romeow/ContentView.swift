@@ -14,20 +14,41 @@ struct ContentView: View {
 
     var body: some View {
         AppView(store: store)
-            .toolbar {
-                ToolbarItem(placement: .navigation) {
-                    FeatureSwitcherButton { featureTitle in
-                        switch featureTitle {
-                        case "REST API":
-                            store.send(.sidebarItemSelected(.requestBuilder))
-                        case "Mock Server":
-                            store.send(.sidebarItemSelected(.mockServer))
-                        default:
-                            break
-                        }
-                    }
+            .overlay {
+                if store.isFeatureSwitcherVisible {
+                    FeatureSwitcherOverlay(store: store)
                 }
             }
+    }
+}
+
+struct FeatureSwitcherOverlay: View {
+    let store: StoreOf<AppFeature>
+
+    var body: some View {
+        ZStack {
+            // Semi-transparent background to dismiss on tap outside
+            Color.black.opacity(0.001)
+                .ignoresSafeArea()
+                .onTapGesture {
+                    store.send(.featureSwitcherTapped)
+                }
+
+            // Feature switcher popup positioned near the sidebar toggle area
+            VStack {
+                HStack {
+                    FeatureGridPopup { feature in
+                        store.send(.featureSelected(feature.title))
+                    }
+                    .padding(.leading, 60)
+                    .padding(.top, 40)
+
+                    Spacer()
+                }
+
+                Spacer()
+            }
+        }
     }
 }
 
