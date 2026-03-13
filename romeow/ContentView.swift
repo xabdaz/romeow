@@ -6,19 +6,22 @@
 //
 
 import SwiftUI
+import ComposableArchitecture
+import AppFeature
+import MockServerFeature
 
 struct ContentView: View {
+    let store: StoreOf<AppFeature>
+
     var body: some View {
-        VStack {
-            Image(systemName: "globe")
-                .imageScale(.large)
-                .foregroundStyle(.tint)
-            Text("Hello, world!")
-        }
-        .padding()
+        MockServerView(store: store.scope(state: \.mockServer, action: \.mockServer))
     }
 }
 
 #Preview {
-    ContentView()
+    ContentView(
+        store: Store(initialState: AppFeature.State()) {
+            AppFeature()
+        }
+    )
 }
