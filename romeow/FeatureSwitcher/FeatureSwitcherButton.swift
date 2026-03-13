@@ -7,6 +7,7 @@ import SwiftUI
 
 struct FeatureSwitcherButton: View {
     @State private var isShowingGrid = false
+    var onSelect: ((String) -> Void)?
 
     var body: some View {
         Button {
@@ -23,7 +24,10 @@ struct FeatureSwitcherButton: View {
         }
         .buttonStyle(.plain)
         .popover(isPresented: $isShowingGrid, arrowEdge: .bottom) {
-            FeatureGridPopup()
+            FeatureGridPopup { feature in
+                isShowingGrid = false
+                onSelect?(feature.title)
+            }
         }
     }
 }

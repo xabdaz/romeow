@@ -14,6 +14,20 @@ struct ContentView: View {
 
     var body: some View {
         AppView(store: store)
+            .toolbar {
+                ToolbarItem(placement: .navigation) {
+                    FeatureSwitcherButton { featureTitle in
+                        switch featureTitle {
+                        case "REST API":
+                            store.send(.sidebarItemSelected(.requestBuilder))
+                        case "Mock Server":
+                            store.send(.sidebarItemSelected(.mockServer))
+                        default:
+                            break
+                        }
+                    }
+                }
+            }
     }
 }
 
