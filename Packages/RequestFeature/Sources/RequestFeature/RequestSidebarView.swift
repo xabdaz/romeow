@@ -26,13 +26,26 @@ public struct RequestSidebarView: View {
                 get: { store.selectedItem },
                 set: { store.send(.itemSelected($0)) }
             )) {
+                // Flatten all workspaces content without section headers
                 ForEach(store.workspaces) { workspace in
-                    WorkspaceSection(
-                        workspace: workspace,
-                        expandedFolders: store.expandedFolders,
-                        selectedItem: store.selectedItem,
-                        send: { store.send($0) }
-                    )
+                    // Root requests (requests yang langsung di workspace, bukan di folder)
+                    ForEach(workspace.requests) { request in
+                        RequestRow(request: request)
+                            .tag(SidebarItem.request(request.id))
+                            .contextMenu {
+                                Button("Delete") { }
+                            }
+                    }
+
+                    // Folders
+                    ForEach(workspace.folders) { folder in
+                        FolderDisclosureGroup(
+                            folder: folder,
+                            isExpanded: store.expandedFolders.contains(folder.id),
+                            selectedItem: store.selectedItem,
+                            send: { store.send($0) }
+                        )
+                    }
                 }
             }
             .listStyle(.sidebar)
