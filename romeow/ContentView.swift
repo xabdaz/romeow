@@ -15,6 +15,11 @@ struct ContentView: View {
 
     var body: some View {
         MockServerView(store: store.scope(state: \.mockServer, action: \.mockServer))
+            .toolbar {
+                ToolbarItem(placement: .navigation) {
+                    FeatureSwitcherButton()
+                }
+            }
     }
 }
 
