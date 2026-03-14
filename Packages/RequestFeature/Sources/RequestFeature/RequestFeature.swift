@@ -33,7 +33,11 @@ public struct RequestFeature {
         case sendButtonTapped
         case responseReceived(Result<APIResponse, Error>)
         case requestSelected(RequestItem)
-        case featureSwitcherTapped
+        case delegate(Delegate)
+
+        public enum Delegate {
+            case featureSwitcherTapped
+        }
     }
 
     @Dependency(\.urlSessionClient) var urlSessionClient
@@ -49,7 +53,7 @@ public struct RequestFeature {
             case .sidebar:
                 return .none
 
-            case .featureSwitcherTapped:
+            case .delegate(.featureSwitcherTapped):
                 // Delegated to parent (AppFeature) to handle
                 return .none
 

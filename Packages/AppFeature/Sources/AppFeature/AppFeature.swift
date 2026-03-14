@@ -71,13 +71,9 @@ public struct AppFeature {
                 }
                 return .none
 
-            // Handle feature switcher tap from RequestFeature
-            case .request(.featureSwitcherTapped):
-                state.isFeatureSwitcherVisible.toggle()
-                return .none
-
-            // Handle feature switcher tap from MockServerFeature
-            case .mockServer(.featureSwitcherTapped):
+            // Handle feature switcher tap from any child feature
+            case .request(.delegate(.featureSwitcherTapped)),
+                 .mockServer(.delegate(.featureSwitcherTapped)):
                 state.isFeatureSwitcherVisible.toggle()
                 return .none
 
