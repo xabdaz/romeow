@@ -21,10 +21,10 @@ struct romeowApp: App {
             ContentView(store: store)
         }
 
-        MenuBarExtra {
-            MenuBarView(store: store)
-        } label: {
-            Image(systemName: store.mockServer.isRunning ? "network.badge.shield.half.filled" : "network")
-        }
+//        MenuBarExtra {
+//            MenuBarView(store: store)
+//        } label: {
+//            Image(systemName: store.mockServer.isRunning ? "network.badge.shield.half.filled" : "network")
+//        }
     }
 }

@@ -39,17 +39,17 @@ struct ContentView: View {
                     FeatureSwitcherButton { selectedFeature in
                         store.send(.featureSelected(selectedFeature))
                     }
-//                    SubFeatureSwitcherButton(
-//                        title: subFeatureTitle,
-//                        items: subFeatureItems
-//                    )
+                    SubFeatureSwitcherButton(
+                        title: subFeatureTitle,
+                        items: subFeatureItems
+                    )
                 }
             }
-            .overlay {
-                if store.isFeatureSwitcherVisible {
-                    FeatureSwitcherOverlay(store: store)
-                }
-            }
+//            .overlay {
+//                if store.isFeatureSwitcherVisible {
+//                    FeatureSwitcherOverlay(store: store)
+//                }
+//            }
     }
 }
 
