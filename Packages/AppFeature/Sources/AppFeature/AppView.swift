@@ -11,14 +11,16 @@ public struct AppView: View {
     }
 
     public var body: some View {
-        Group {
-            switch store.selectedSidebar {
-            case .requestBuilder, .none:
-                // RequestView sudah punya NavigationSplitView dengan sidebar workspace
-                RequestView(store: store.scope(state: \.request, action: \.request))
+        ZStack {
+            Group {
+                switch store.selectedSidebar {
+                case .requestBuilder, .none:
+                    // RequestView sudah punya NavigationSplitView dengan sidebar workspace
+                    RequestView(store: store.scope(state: \.request, action: \.request))
 
-            case .mockServer:
-                MockServerView(store: store.scope(state: \.mockServer, action: \.mockServer))
+                case .mockServer:
+                    MockServerView(store: store.scope(state: \.mockServer, action: \.mockServer))
+                }
             }
         }
     }

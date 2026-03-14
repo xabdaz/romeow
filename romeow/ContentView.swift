@@ -36,18 +36,20 @@ struct ContentView: View {
         AppView(store: store)
             .toolbar {
                 ToolbarItemGroup(placement: .navigation) {
-                    FeatureSwitcherButton()
+                    FeatureSwitcherButton { selectedFeature in
+                        store.send(.featureSelected(selectedFeature))
+                    }
                     SubFeatureSwitcherButton(
                         title: subFeatureTitle,
                         items: subFeatureItems
                     )
                 }
             }
-            .overlay {
-                if store.isFeatureSwitcherVisible {
-                    FeatureSwitcherOverlay(store: store)
-                }
-            }
+//            .overlay {
+//                if store.isFeatureSwitcherVisible {
+//                    FeatureSwitcherOverlay(store: store)
+//                }
+//            }
     }
 }
 
