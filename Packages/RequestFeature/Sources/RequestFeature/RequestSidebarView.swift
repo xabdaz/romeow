@@ -2,33 +2,62 @@ import ComposableArchitecture
 import SharedModels
 import SwiftUI
 
+// MARK: - Sidebar Tab
+enum SidebarTab: String, CaseIterable {
+    case collections
+    case environments
+    case log
+
+    var icon: String {
+        switch self {
+        case .collections: "folder"
+        case .environments: "slider.horizontal.3"
+        case .log: "clock"
+        }
+    }
+
+    var label: String {
+        switch self {
+        case .collections: "Collections"
+        case .environments: "Environments"
+        case .log: "Log"
+        }
+    }
+}
+
 public struct RequestSidebarView: View {
     @Bindable var store: StoreOf<RequestSidebarFeature>
-    var onFeatureSwitcherTap: (() -> Void)?
+    @State private var activeTab: SidebarTab? = .collections
 
-    public init(store: StoreOf<RequestSidebarFeature>, onFeatureSwitcherTap: (() -> Void)? = nil) {
+    public init(store: StoreOf<RequestSidebarFeature>) {
         self.store = store
-        self.onFeatureSwitcherTap = onFeatureSwitcherTap
     }
 
     public var body: some View {
-        VStack(spacing: 0) {
-            // Horizontal toolbar strip at the top of sidebar
-            SidebarToolbarStrip(
-                workspace: store.workspaces.first,
-                onFeatureSwitcherTap: onFeatureSwitcherTap
-            )
+        HStack(spacing: 0) {
+            // Vertical icon strip
+            SidebarIconStrip(activeTab: $activeTab)
 
             Divider()
 
-            // Main sidebar content with folders and requests
+            // Content panel (show/hide based on activeTab)
+            if let tab = activeTab {
+                sidebarContent(for: tab)
+                    .frame(minWidth: 200)
+            }
+        }
+        .frame(minWidth: activeTab != nil ? 280 : 64)
+    }
+
+    @ViewBuilder
+    private func sidebarContent(for tab: SidebarTab) -> some View {
+        switch tab {
+        case .collections:
             List(selection: Binding(
                 get: { store.selectedItem },
                 set: { store.send(.itemSelected($0)) }
             )) {
-                // Flatten all workspaces content without section headers
                 ForEach(store.workspaces) { workspace in
-                    // Root requests (requests yang langsung di workspace, bukan di folder)
                     ForEach(workspace.requests) { request in
                         RequestRow(request: request)
                             .tag(SidebarItem.request(request.id))
@@ -37,7 +66,6 @@ public struct RequestSidebarView: View {
                             }
                     }
 
-                    // Folders
                     ForEach(workspace.folders) { folder in
                         FolderDisclosureGroup(
                             folder: folder,
@@ -49,63 +77,77 @@ public struct RequestSidebarView: View {
                 }
             }
             .listStyle(.sidebar)
+
+        case .environments:
+            List {
+                Text("No environments yet")
+                    .foregroundStyle(.secondary)
+            }
+            .listStyle(.sidebar)
+
+        case .log:
+            List {
+                Text("No logs yet")
+                    .foregroundStyle(.secondary)
+            }
+            .listStyle(.sidebar)
         }
-        .frame(minWidth: 220)
     }
 }
 
-// MARK: - Sidebar Toolbar Strip
-struct SidebarToolbarStrip: View {
-    let workspace: Workspace?
-    var onFeatureSwitcherTap: (() -> Void)?
+// MARK: - Sidebar Icon Strip
+struct SidebarIconStrip: View {
+    @Binding var activeTab: SidebarTab?
 
     var body: some View {
-        HStack(spacing: 12) {
-            // Sidebar toggle button (≡)
-            Button {
-                // Toggle sidebar visibility - handled by NavigationSplitView
-            } label: {
-                Image(systemName: "sidebar.left")
-                    .font(.system(size: 13, weight: .medium))
-                    .foregroundStyle(.secondary)
-            }
-            .buttonStyle(.plain)
-
-            // Feature switcher button (••• / grid)
-            Button {
-                onFeatureSwitcherTap?()
-            } label: {
-                Image(systemName: "square.grid.2x2")
-                    .font(.system(size: 13, weight: .medium))
-                    .foregroundStyle(.primary)
-            }
-            .buttonStyle(.plain)
-
-            Spacer()
-
-            // Workspace dropdown title
-            if let workspace = workspace {
-                Menu {
-                    Text("Coming Soon")
-                    Button("Switch Workspace") {}
-                        .disabled(true)
-                } label: {
-                    HStack(spacing: 4) {
-                        Text(workspace.name)
-                            .font(.system(size: 13, weight: .semibold))
-                            .foregroundStyle(.primary)
-                        Image(systemName: "chevron.down")
-                            .font(.system(size: 10, weight: .medium))
-                            .foregroundStyle(.secondary)
+        VStack(spacing: 4) {
+            ForEach(SidebarTab.allCases, id: \.self) { tab in
+                SidebarIconButton(
+                    icon: tab.icon,
+                    label: tab.label,
+                    isActive: activeTab == tab
+                ) {
+                    // Toggle: tap active tab to hide panel
+                    if activeTab == tab {
+                        activeTab = nil
+                    } else {
+                        activeTab = tab
                     }
                 }
-                .menuStyle(.borderlessButton)
-                .fixedSize()
             }
+            Spacer()
         }
-        .padding(.horizontal, 12)
-        .padding(.vertical, 10)
+        .padding(.vertical, 8)
+        .frame(width: 64)
         .background(Color(NSColor.controlBackgroundColor))
+    }
+}
+
+// MARK: - Sidebar Icon Button
+struct SidebarIconButton: View {
+    let icon: String
+    let label: String
+    let isActive: Bool
+    let action: () -> Void
+
+    var body: some View {
+        Button(action: action) {
+            VStack(spacing: 2) {
+                Image(systemName: icon)
+                    .font(.system(size: 14, weight: .medium))
+                Text(label)
+                    .font(.system(size: 9, weight: .medium))
+                    .lineLimit(1)
+            }
+            .foregroundStyle(isActive ? .primary : .secondary)
+            .frame(width: 56, height: 44)
+            .background(
+                RoundedRectangle(cornerRadius: 6)
+                    .fill(isActive ? Color.accentColor.opacity(0.15) : Color.clear)
+            )
+        }
+        .buttonStyle(.plain)
+        .help(label)
     }
 }
 

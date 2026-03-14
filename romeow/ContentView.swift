@@ -8,12 +8,41 @@
 import SwiftUI
 import ComposableArchitecture
 import AppFeature
+import RequestFeature
+import SharedModels
 
 struct ContentView: View {
     let store: StoreOf<AppFeature>
 
+    private var subFeatureTitle: String {
+        switch store.selectedSidebar {
+        case .requestBuilder, .none:
+            store.request.sidebar.workspaces.first?.name ?? "Workspace"
+        case .mockServer:
+            "Mock Server"
+        }
+    }
+
+    private var subFeatureItems: [String] {
+        switch store.selectedSidebar {
+        case .requestBuilder, .none:
+            store.request.sidebar.workspaces.map(\.name)
+        case .mockServer:
+            ["Mock Server"]
+        }
+    }
+
     var body: some View {
         AppView(store: store)
+            .toolbar {
+                ToolbarItemGroup(placement: .navigation) {
+                    FeatureSwitcherButton()
+                    SubFeatureSwitcherButton(
+                        title: subFeatureTitle,
+                        items: subFeatureItems
+                    )
+                }
+            }
             .overlay {
                 if store.isFeatureSwitcherVisible {
                     FeatureSwitcherOverlay(store: store)

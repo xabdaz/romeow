@@ -12,10 +12,7 @@ public struct RequestView: View {
     public var body: some View {
         NavigationSplitView {
             RequestSidebarView(
-                store: store.scope(state: \.sidebar, action: \.sidebar),
-                onFeatureSwitcherTap: {
-                    store.send(.featureSwitcherTapped)
-                }
+                store: store.scope(state: \.sidebar, action: \.sidebar)
             )
         } detail: {
             RequestBuilderView(store: store)
