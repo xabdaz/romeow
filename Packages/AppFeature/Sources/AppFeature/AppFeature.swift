@@ -9,6 +9,7 @@ public struct AppFeature {
     @ObservableState
     public struct State: Equatable {
         public var selectedSidebar: SidebarItem?
+        public var isFeatureSwitcherVisible: Bool
         public var request: RequestFeature.State
         public var response: ResponseFeature.State
         public var mockServer: MockServerFeature.State
@@ -20,6 +21,7 @@ public struct AppFeature {
 
         public init() {
             self.selectedSidebar = .requestBuilder
+            self.isFeatureSwitcherVisible = false
             self.request = RequestFeature.State()
             self.response = ResponseFeature.State()
             self.mockServer = MockServerFeature.State()
@@ -28,6 +30,8 @@ public struct AppFeature {
 
     public enum Action {
         case sidebarItemSelected(State.SidebarItem?)
+        case featureSwitcherTapped
+        case featureSelected(String)
         case request(RequestFeature.Action)
         case response(ResponseFeature.Action)
         case mockServer(MockServerFeature.Action)
@@ -49,6 +53,27 @@ public struct AppFeature {
             switch action {
             case let .sidebarItemSelected(item):
                 state.selectedSidebar = item
+                return .none
+
+            case .featureSwitcherTapped:
+                state.isFeatureSwitcherVisible.toggle()
+                return .none
+
+            case let .featureSelected(featureTitle):
+                state.isFeatureSwitcherVisible = false
+                switch featureTitle {
+                case "REST API":
+                    state.selectedSidebar = .requestBuilder
+                case "Mock Server":
+                    state.selectedSidebar = .mockServer
+                default:
+                    break
+                }
+                return .none
+
+            // Handle feature switcher tap from RequestFeature
+            case .request(.featureSwitcherTapped):
+                state.isFeatureSwitcherVisible.toggle()
                 return .none
 
             // Response di-sync saat request selesai

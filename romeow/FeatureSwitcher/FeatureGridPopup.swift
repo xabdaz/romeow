@@ -24,6 +24,8 @@ struct FeatureGridPopup: View {
         GridItem(.fixed(80)),
     ]
 
+    var onSelect: ((FeatureItem) -> Void)?
+
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
             Text("romeow")
@@ -34,7 +36,9 @@ struct FeatureGridPopup: View {
 
             LazyVGrid(columns: columns, spacing: 12) {
                 ForEach(features) { feature in
-                    FeatureGridItem(feature: feature)
+                    FeatureGridItem(feature: feature) {
+                        onSelect?(feature)
+                    }
                 }
             }
         }
@@ -45,6 +49,7 @@ struct FeatureGridPopup: View {
 
 struct FeatureGridItem: View {
     let feature: FeatureItem
+    var onTap: () -> Void
     @State private var isHovered = false
 
     var body: some View {
@@ -71,6 +76,9 @@ struct FeatureGridItem: View {
         )
         .onHover { isHovered = $0 }
         .contentShape(Rectangle())
+        .onTapGesture {
+            onTap()
+        }
     }
 }
 
