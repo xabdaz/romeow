@@ -45,7 +45,7 @@ struct MockServerDetailView: View {
         .frame(minWidth: 360)
         .toolbar {
             ToolbarItem(placement: .navigation) {
-                Button(action: { store.send(.featureSwitcherTapped) }) {
+                Button(action: { store.send(.delegate(.featureSwitcherTapped)) }) {
                     HStack(spacing: 4) {
                         Image(systemName: "server.rack")
                         Text("Mock Server")

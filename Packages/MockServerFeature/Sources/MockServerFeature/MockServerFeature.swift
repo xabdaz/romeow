@@ -30,7 +30,11 @@ public struct MockServerFeature {
         case serverStarted
         case serverStopped
         case serverFailed(String)
-        case featureSwitcherTapped
+        case delegate(Delegate)
+
+        public enum Delegate {
+            case featureSwitcherTapped
+        }
     }
 
     @Dependency(\.mockServerClient) var mockServerClient
@@ -98,7 +102,7 @@ public struct MockServerFeature {
                 state.errorMessage = message
                 return .none
 
-            case .featureSwitcherTapped:
+            case .delegate(.featureSwitcherTapped):
                 // Delegated to parent (AppFeature) to handle
                 return .none
             }
