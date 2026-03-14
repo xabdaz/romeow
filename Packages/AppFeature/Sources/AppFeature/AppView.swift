@@ -50,10 +50,11 @@ struct FeatureSwitcherOverlay: View {
                     icon: "network",
                     title: "REST API",
                     subtitle: "Build and send HTTP requests",
-                    isSelected: store.selectedSidebar == .requestBuilder
-                ) {
-                    store.send(.featureSelected("REST API"))
-                }
+                    isSelected: store.selectedSidebar == .requestBuilder,
+                    onSelect: {
+                        store.send(.featureSelected("REST API"))
+                    }
+                )
 
                 Divider()
 
@@ -61,10 +62,11 @@ struct FeatureSwitcherOverlay: View {
                     icon: "server.rack",
                     title: "Mock Server",
                     subtitle: "Run local mock API server",
-                    isSelected: store.selectedSidebar == .mockServer
-                ) {
-                    store.send(.featureSelected("Mock Server"))
-                }
+                    isSelected: store.selectedSidebar == .mockServer,
+                    onSelect: {
+                        store.send(.featureSelected("Mock Server"))
+                    }
+                )
             }
             .frame(width: 280)
             .background(Color(NSColor.controlBackgroundColor))
@@ -80,10 +82,10 @@ struct FeatureSwitcherItem: View {
     let title: String
     let subtitle: String
     let isSelected: Bool
-    let action: () -> Void
+    let onSelect: () -> Void
 
     var body: some View {
-        Button(action: action) {
+        Button(action: onSelect) {
             HStack(spacing: 12) {
                 Image(systemName: icon)
                     .font(.system(size: 20))
