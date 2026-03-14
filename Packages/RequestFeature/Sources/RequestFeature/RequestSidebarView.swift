@@ -19,7 +19,7 @@ enum SidebarTab: String, CaseIterable {
     var label: String {
         switch self {
         case .collections: "Collections"
-        case .environments: "Environments"
+        case .environments: "ENV"
         case .log: "Log"
         }
     }
@@ -27,7 +27,7 @@ enum SidebarTab: String, CaseIterable {
 
 public struct RequestSidebarView: View {
     @Bindable var store: StoreOf<RequestSidebarFeature>
-    @State private var activeTab: SidebarTab? = .collections
+    @State private var activeTab: SidebarTab = .collections
 
     public init(store: StoreOf<RequestSidebarFeature>) {
         self.store = store
@@ -40,13 +40,11 @@ public struct RequestSidebarView: View {
 
             Divider()
 
-            // Content panel (show/hide based on activeTab)
-            if let tab = activeTab {
-                sidebarContent(for: tab)
-                    .frame(minWidth: 200)
-            }
+            // Content panel
+            sidebarContent(for: activeTab)
+                .frame(minWidth: 200)
         }
-        .frame(minWidth: activeTab != nil ? 280 : 64)
+        .frame(minWidth: 280)
     }
 
     @ViewBuilder
@@ -97,7 +95,7 @@ public struct RequestSidebarView: View {
 
 // MARK: - Sidebar Icon Strip
 struct SidebarIconStrip: View {
-    @Binding var activeTab: SidebarTab?
+    @Binding var activeTab: SidebarTab
 
     var body: some View {
         VStack(spacing: 4) {
@@ -107,12 +105,7 @@ struct SidebarIconStrip: View {
                     label: tab.label,
                     isActive: activeTab == tab
                 ) {
-                    // Toggle: tap active tab to hide panel
-                    if activeTab == tab {
-                        activeTab = nil
-                    } else {
-                        activeTab = tab
-                    }
+                    activeTab = tab
                 }
             }
             Spacer()
