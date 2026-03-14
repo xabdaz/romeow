@@ -73,6 +73,20 @@ struct RequestBuilderView: View {
             ResponseView(store: store)
         }
         .frame(minWidth: 400)
+        .toolbar {
+            ToolbarItem(placement: .navigation) {
+                Button(action: { store.send(.featureSwitcherTapped) }) {
+                    HStack(spacing: 4) {
+                        Image(systemName: "network")
+                        Text("REST API")
+                            .fontWeight(.semibold)
+                        Image(systemName: "chevron.down")
+                            .font(.caption)
+                    }
+                }
+                .buttonStyle(.plain)
+            }
+        }
     }
 }
 

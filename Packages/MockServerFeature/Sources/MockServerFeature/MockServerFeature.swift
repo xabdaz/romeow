@@ -30,6 +30,7 @@ public struct MockServerFeature {
         case serverStarted
         case serverStopped
         case serverFailed(String)
+        case featureSwitcherTapped
     }
 
     @Dependency(\.mockServerClient) var mockServerClient
@@ -95,6 +96,10 @@ public struct MockServerFeature {
             case let .serverFailed(message):
                 state.isRunning = false
                 state.errorMessage = message
+                return .none
+
+            case .featureSwitcherTapped:
+                // Delegated to parent (AppFeature) to handle
                 return .none
             }
         }

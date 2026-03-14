@@ -76,6 +76,11 @@ public struct AppFeature {
                 state.isFeatureSwitcherVisible.toggle()
                 return .none
 
+            // Handle feature switcher tap from MockServerFeature
+            case .mockServer(.featureSwitcherTapped):
+                state.isFeatureSwitcherVisible.toggle()
+                return .none
+
             // Response di-sync saat request selesai
             case let .request(.responseReceived(.success(apiResponse))):
                 state.response.response = apiResponse

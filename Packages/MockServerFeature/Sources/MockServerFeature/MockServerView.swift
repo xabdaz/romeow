@@ -9,6 +9,59 @@ public struct MockServerView: View {
     }
 
     public var body: some View {
+        NavigationSplitView {
+            // Sidebar - placeholder untuk konsistensi dengan RequestView
+            MockServerSidebarView()
+        } detail: {
+            MockServerDetailView(store: store)
+        }
+        .navigationSplitViewStyle(.balanced)
+    }
+}
+
+// MARK: - Sidebar View
+struct MockServerSidebarView: View {
+    var body: some View {
+        VStack(spacing: 0) {
+            // Header
+            HStack {
+                Text("Mock Server")
+                    .font(.headline)
+                Spacer()
+            }
+            .padding()
+
+            Divider()
+
+            // Routes List
+            List {
+                Section("Routes") {
+                    HStack {
+                        Text("GET")
+                            .font(.system(.caption, design: .monospaced))
+                            .padding(.horizontal, 6)
+                            .padding(.vertical, 2)
+                            .background(Color.blue.opacity(0.15), in: RoundedRectangle(cornerRadius: 4))
+                            .foregroundStyle(.blue)
+                        Text("/health")
+                            .font(.system(.body, design: .monospaced))
+                        Spacer()
+                    }
+                }
+            }
+            .listStyle(.sidebar)
+
+            Spacer()
+        }
+        .frame(minWidth: 200)
+    }
+}
+
+// MARK: - Detail View
+struct MockServerDetailView: View {
+    let store: StoreOf<MockServerFeature>
+
+    var body: some View {
         VStack(spacing: 24) {
             // Status indicator
             serverStatusBadge
@@ -47,6 +100,20 @@ public struct MockServerView: View {
         }
         .padding(32)
         .frame(minWidth: 360)
+        .toolbar {
+            ToolbarItem(placement: .navigation) {
+                Button(action: { store.send(.featureSwitcherTapped) }) {
+                    HStack(spacing: 4) {
+                        Image(systemName: "server.rack")
+                        Text("Mock Server")
+                            .fontWeight(.semibold)
+                        Image(systemName: "chevron.down")
+                            .font(.caption)
+                    }
+                }
+                .buttonStyle(.plain)
+            }
+        }
     }
 
     // MARK: - Subviews
