@@ -6,12 +6,9 @@ import SharedModels
 // MARK: - Core Data Client
 
 public struct CoreDataClient: Sendable {
-    // Workspace operations
     public var fetchWorkspaces: @Sendable () async throws -> [MockWorkspace]
     public var saveWorkspace: @Sendable (MockWorkspace) async throws -> MockWorkspace
     public var deleteWorkspace: @Sendable (UUID) async throws -> Void
-
-    // Route operations
     public var fetchRoutes: @Sendable (UUID?) async throws -> [MockRoute]
     public var saveRoute: @Sendable (MockRoute) async throws -> MockRoute
     public var deleteRoute: @Sendable (UUID) async throws -> Void
@@ -41,8 +38,8 @@ private final class CoreDataStack: @unchecked Sendable {
     let persistentContainer: NSPersistentContainer
 
     private init() {
-        // Create managed object model programmatically
-        let model = CoreDataStack.createManagedObjectModel()
+        // Create model programmatically
+        let model = CoreDataStack.createModel()
 
         persistentContainer = NSPersistentContainer(name: "MockAPIModel", managedObjectModel: model)
 
@@ -53,11 +50,10 @@ private final class CoreDataStack: @unchecked Sendable {
             .appendingPathComponent("MockAPI.sqlite")
 
         if let storeURL = storeURL {
-            // Ensure directory exists
             let directoryURL = storeURL.deletingLastPathComponent()
             try? FileManager.default.createDirectory(at: directoryURL, withIntermediateDirectories: true)
 
-            // Remove old store if exists to avoid migration issues during development
+            // Clear old store during development
             if FileManager.default.fileExists(atPath: storeURL.path) {
                 try? FileManager.default.removeItem(at: storeURL)
             }
@@ -67,9 +63,9 @@ private final class CoreDataStack: @unchecked Sendable {
             persistentContainer.persistentStoreDescriptions = [description]
         }
 
-        persistentContainer.loadPersistentStores { description, error in
+        persistentContainer.loadPersistentStores { _, error in
             if let error = error {
-                fatalError("Core Data failed to load: \(error)")
+                fatalError("Core Data failed: \(error)")
             }
         }
 
@@ -77,372 +73,255 @@ private final class CoreDataStack: @unchecked Sendable {
         persistentContainer.viewContext.mergePolicy = NSMergeByPropertyObjectTrumpMergePolicy
     }
 
-    private static func createManagedObjectModel() -> NSManagedObjectModel {
+    private static func createModel() -> NSManagedObjectModel {
         let model = NSManagedObjectModel()
 
-        // MockWorkspaceEntity
-        let workspaceEntity = NSEntityDescription()
-        workspaceEntity.name = "MockWorkspaceEntity"
-        workspaceEntity.managedObjectClassName = "MockWorkspaceEntity"
+        // Workspace Entity
+        let workspace = NSEntityDescription()
+        workspace.name = "Workspace"
+        workspace.managedObjectClassName = "NSManagedObject"
 
-        let workspaceId = NSAttributeDescription()
-        workspaceId.name = "id"
-        workspaceId.attributeType = .UUIDAttributeType
+        let wId = NSAttributeDescription()
+        wId.name = "id"
+        wId.attributeType = .UUIDAttributeType
 
-        let workspaceName = NSAttributeDescription()
-        workspaceName.name = "name"
-        workspaceName.attributeType = .stringAttributeType
+        let wName = NSAttributeDescription()
+        wName.name = "name"
+        wName.attributeType = .stringAttributeType
 
-        let workspaceCreatedAt = NSAttributeDescription()
-        workspaceCreatedAt.name = "createdAt"
-        workspaceCreatedAt.attributeType = .dateAttributeType
+        let wCreated = NSAttributeDescription()
+        wCreated.name = "createdAt"
+        wCreated.attributeType = .dateAttributeType
 
-        let workspaceUpdatedAt = NSAttributeDescription()
-        workspaceUpdatedAt.name = "updatedAt"
-        workspaceUpdatedAt.attributeType = .dateAttributeType
+        let wUpdated = NSAttributeDescription()
+        wUpdated.name = "updatedAt"
+        wUpdated.attributeType = .dateAttributeType
 
-        workspaceEntity.properties = [workspaceId, workspaceName, workspaceCreatedAt, workspaceUpdatedAt]
+        workspace.properties = [wId, wName, wCreated, wUpdated]
 
-        // MockRouteEntity
-        let routeEntity = NSEntityDescription()
-        routeEntity.name = "MockRouteEntity"
-        routeEntity.managedObjectClassName = "MockRouteEntity"
+        // Route Entity
+        let route = NSEntityDescription()
+        route.name = "Route"
+        route.managedObjectClassName = "NSManagedObject"
 
-        let routeId = NSAttributeDescription()
-        routeId.name = "id"
-        routeId.attributeType = .UUIDAttributeType
+        let rId = NSAttributeDescription()
+        rId.name = "id"
+        rId.attributeType = .UUIDAttributeType
 
-        let routeWorkspaceId = NSAttributeDescription()
-        routeWorkspaceId.name = "workspaceId"
-        routeWorkspaceId.attributeType = .UUIDAttributeType
-        routeWorkspaceId.isOptional = true
+        let rWorkspaceId = NSAttributeDescription()
+        rWorkspaceId.name = "workspaceId"
+        rWorkspaceId.attributeType = .UUIDAttributeType
 
-        let routeName = NSAttributeDescription()
-        routeName.name = "name"
-        routeName.attributeType = .stringAttributeType
+        let rName = NSAttributeDescription()
+        rName.name = "name"
+        rName.attributeType = .stringAttributeType
 
-        let routeMethod = NSAttributeDescription()
-        routeMethod.name = "method"
-        routeMethod.attributeType = .stringAttributeType
+        let rMethod = NSAttributeDescription()
+        rMethod.name = "method"
+        rMethod.attributeType = .stringAttributeType
 
-        let routePath = NSAttributeDescription()
-        routePath.name = "path"
-        routePath.attributeType = .stringAttributeType
+        let rPath = NSAttributeDescription()
+        rPath.name = "path"
+        rPath.attributeType = .stringAttributeType
 
-        let routeStatusCode = NSAttributeDescription()
-        routeStatusCode.name = "statusCode"
-        routeStatusCode.attributeType = .integer16AttributeType
-        routeStatusCode.defaultValue = 200
+        let rStatus = NSAttributeDescription()
+        rStatus.name = "statusCode"
+        rStatus.attributeType = .integer16AttributeType
+        rStatus.defaultValue = 200
 
-        let routeResponseBody = NSAttributeDescription()
-        routeResponseBody.name = "responseBody"
-        routeResponseBody.attributeType = .stringAttributeType
-        routeResponseBody.isOptional = true
+        let rBody = NSAttributeDescription()
+        rBody.name = "responseBody"
+        rBody.attributeType = .stringAttributeType
 
-        let routeResponseHeaders = NSAttributeDescription()
-        routeResponseHeaders.name = "responseHeaders"
-        routeResponseHeaders.attributeType = .stringAttributeType
-        routeResponseHeaders.isOptional = true
+        let rHeaders = NSAttributeDescription()
+        rHeaders.name = "responseHeaders"
+        rHeaders.attributeType = .stringAttributeType
 
-        let routeIsEnabled = NSAttributeDescription()
-        routeIsEnabled.name = "isEnabled"
-        routeIsEnabled.attributeType = .booleanAttributeType
-        routeIsEnabled.defaultValue = true
+        let rEnabled = NSAttributeDescription()
+        rEnabled.name = "isEnabled"
+        rEnabled.attributeType = .booleanAttributeType
+        rEnabled.defaultValue = true
 
-        let routeCreatedAt = NSAttributeDescription()
-        routeCreatedAt.name = "createdAt"
-        routeCreatedAt.attributeType = .dateAttributeType
+        let rCreated = NSAttributeDescription()
+        rCreated.name = "createdAt"
+        rCreated.attributeType = .dateAttributeType
 
-        let routeUpdatedAt = NSAttributeDescription()
-        routeUpdatedAt.name = "updatedAt"
-        routeUpdatedAt.attributeType = .dateAttributeType
+        let rUpdated = NSAttributeDescription()
+        rUpdated.name = "updatedAt"
+        rUpdated.attributeType = .dateAttributeType
 
-        routeEntity.properties = [
-            routeId, routeWorkspaceId, routeName, routeMethod, routePath,
-            routeStatusCode, routeResponseBody, routeResponseHeaders,
-            routeIsEnabled, routeCreatedAt, routeUpdatedAt
-        ]
+        route.properties = [rId, rWorkspaceId, rName, rMethod, rPath, rStatus, rBody, rHeaders, rEnabled, rCreated, rUpdated]
 
-        // Relationships
-        let workspaceRoutes = NSRelationshipDescription()
-        workspaceRoutes.name = "routes"
-        workspaceRoutes.destinationEntity = routeEntity
-        workspaceRoutes.minCount = 0
-        workspaceRoutes.maxCount = 0 // to-many
-        workspaceRoutes.deleteRule = .cascadeDeleteRule
-
-        let routeWorkspace = NSRelationshipDescription()
-        routeWorkspace.name = "workspace"
-        routeWorkspace.destinationEntity = workspaceEntity
-        routeWorkspace.minCount = 0
-        routeWorkspace.maxCount = 1 // to-one
-        routeWorkspace.deleteRule = .nullifyDeleteRule
-
-        workspaceRoutes.inverseRelationship = routeWorkspace
-        routeWorkspace.inverseRelationship = workspaceRoutes
-
-        workspaceEntity.properties.append(workspaceRoutes)
-        routeEntity.properties.append(routeWorkspace)
-
-        model.entities = [workspaceEntity, routeEntity]
-
+        model.entities = [workspace, route]
         return model
     }
 
-    var backgroundContext: NSManagedObjectContext {
-        return persistentContainer.newBackgroundContext()
-    }
-
-    @discardableResult
-    func save(context: NSManagedObjectContext) -> Bool {
-        guard context.hasChanges else { return true }
-        do {
-            try context.save()
-            return true
-        } catch {
-            print("Core Data save error: \(error)")
-            return false
-        }
+    func newBackgroundContext() -> NSManagedObjectContext {
+        let context = persistentContainer.newBackgroundContext()
+        context.mergePolicy = NSMergeByPropertyObjectTrumpMergePolicy
+        return context
     }
 }
 
-// MARK: - NSManagedObject Subclasses
-
-@objc(MockWorkspaceEntity)
-private class MockWorkspaceEntity: NSManagedObject {
-    @NSManaged var id: UUID?
-    @NSManaged var name: String?
-    @NSManaged var createdAt: Date?
-    @NSManaged var updatedAt: Date?
-    @NSManaged var routes: Set<MockRouteEntity>?
-
-    func toModel() -> MockWorkspace {
-        MockWorkspace(
-            id: id ?? UUID(),
-            name: name ?? "",
-            createdAt: createdAt ?? Date(),
-            updatedAt: updatedAt ?? Date()
-        )
-    }
-}
-
-@objc(MockRouteEntity)
-private class MockRouteEntity: NSManagedObject {
-    @NSManaged var id: UUID?
-    @NSManaged var workspaceId: UUID?
-    @NSManaged var name: String?
-    @NSManaged var method: String?
-    @NSManaged var path: String?
-    @NSManaged var statusCode: Int16
-    @NSManaged var responseBody: String?
-    @NSManaged var responseHeaders: String?
-    @NSManaged var isEnabled: Bool
-    @NSManaged var createdAt: Date?
-    @NSManaged var updatedAt: Date?
-    @NSManaged var workspace: MockWorkspaceEntity?
-
-    func toModel() -> MockRoute {
-        let headers: [String: String]
-        if let headersString = responseHeaders,
-           let data = headersString.data(using: .utf8),
-           let decoded = try? JSONDecoder().decode([String: String].self, from: data) {
-            headers = decoded
-        } else {
-            headers = [:]
-        }
-
-        return MockRoute(
-            id: id ?? UUID(),
-            workspaceId: workspaceId,
-            name: name ?? "",
-            method: HTTPMethod(rawValue: method ?? "GET") ?? .get,
-            path: path ?? "",
-            statusCode: Int(statusCode),
-            responseHeaders: headers,
-            responseBody: responseBody ?? "",
-            isEnabled: isEnabled,
-            createdAt: createdAt ?? Date(),
-            updatedAt: updatedAt ?? Date()
-        )
-    }
-}
-
-// MARK: - Core Data Operations
+// MARK: - Actor
 
 private actor CoreDataActor {
-    let stack: CoreDataStack
-
-    init(stack: CoreDataStack = .shared) {
-        self.stack = stack
-    }
+    let stack = CoreDataStack.shared
 
     func fetchWorkspaces() async throws -> [MockWorkspace] {
-        let context = stack.backgroundContext
+        let context = stack.newBackgroundContext()
         return try await context.perform {
-            let request = NSFetchRequest<MockWorkspaceEntity>(entityName: "MockWorkspaceEntity")
+            let request = NSFetchRequest<NSManagedObject>(entityName: "Workspace")
             request.sortDescriptors = [NSSortDescriptor(key: "createdAt", ascending: false)]
-            let entities = try context.fetch(request)
-            return entities.map { $0.toModel() }
+
+            let results = try context.fetch(request)
+            return results.map { obj in
+                MockWorkspace(
+                    id: obj.value(forKey: "id") as? UUID ?? UUID(),
+                    name: obj.value(forKey: "name") as? String ?? "",
+                    createdAt: obj.value(forKey: "createdAt") as? Date ?? Date(),
+                    updatedAt: obj.value(forKey: "updatedAt") as? Date ?? Date()
+                )
+            }
         }
     }
 
     func saveWorkspace(_ workspace: MockWorkspace) async throws -> MockWorkspace {
-        let context = stack.backgroundContext
+        let context = stack.newBackgroundContext()
         return try await context.perform {
-            let request = NSFetchRequest<MockWorkspaceEntity>(entityName: "MockWorkspaceEntity")
+            let request = NSFetchRequest<NSManagedObject>(entityName: "Workspace")
             request.predicate = NSPredicate(format: "id == %@", workspace.id as CVarArg)
 
-            let entity: MockWorkspaceEntity
+            let entity: NSManagedObject
             if let existing = try context.fetch(request).first {
                 entity = existing
             } else {
-                entity = MockWorkspaceEntity(context: context)
-                entity.id = workspace.id
-                entity.createdAt = workspace.createdAt
+                entity = NSEntityDescription.insertNewObject(forEntityName: "Workspace", into: context)
+                entity.setValue(workspace.id, forKey: "id")
+                entity.setValue(workspace.createdAt, forKey: "createdAt")
             }
 
-            entity.name = workspace.name
-            entity.updatedAt = Date()
+            entity.setValue(workspace.name, forKey: "name")
+            entity.setValue(Date(), forKey: "updatedAt")
 
-            guard self.stack.save(context: context) else {
-                throw CoreDataError.saveFailed
-            }
-
-            return entity.toModel()
+            try context.save()
+            return workspace
         }
     }
 
     func deleteWorkspace(id: UUID) async throws {
-        let context = stack.backgroundContext
+        let context = stack.newBackgroundContext()
         try await context.perform {
-            let request = NSFetchRequest<MockWorkspaceEntity>(entityName: "MockWorkspaceEntity")
+            let request = NSFetchRequest<NSManagedObject>(entityName: "Workspace")
             request.predicate = NSPredicate(format: "id == %@", id as CVarArg)
 
-            guard let entity = try context.fetch(request).first else {
-                throw CoreDataError.notFound
-            }
-
-            context.delete(entity)
-
-            guard self.stack.save(context: context) else {
-                throw CoreDataError.saveFailed
+            if let entity = try context.fetch(request).first {
+                context.delete(entity)
+                try context.save()
             }
         }
     }
 
     func fetchRoutes(workspaceId: UUID?) async throws -> [MockRoute] {
-        let context = stack.backgroundContext
+        let context = stack.newBackgroundContext()
         return try await context.perform {
-            let request = NSFetchRequest<MockRouteEntity>(entityName: "MockRouteEntity")
+            let request = NSFetchRequest<NSManagedObject>(entityName: "Route")
 
             if let workspaceId = workspaceId {
                 request.predicate = NSPredicate(format: "workspaceId == %@", workspaceId as CVarArg)
             }
 
             request.sortDescriptors = [NSSortDescriptor(key: "createdAt", ascending: false)]
-            let entities = try context.fetch(request)
-            return entities.map { $0.toModel() }
+
+            let results = try context.fetch(request)
+            return results.map { obj in
+                let headersString = obj.value(forKey: "responseHeaders") as? String
+                let headers: [String: String]
+                if let data = headersString?.data(using: .utf8),
+                   let decoded = try? JSONDecoder().decode([String: String].self, from: data) {
+                    headers = decoded
+                } else {
+                    headers = [:]
+                }
+
+                return MockRoute(
+                    id: obj.value(forKey: "id") as? UUID ?? UUID(),
+                    workspaceId: obj.value(forKey: "workspaceId") as? UUID,
+                    name: obj.value(forKey: "name") as? String ?? "",
+                    method: HTTPMethod(rawValue: obj.value(forKey: "method") as? String ?? "GET") ?? .get,
+                    path: obj.value(forKey: "path") as? String ?? "",
+                    statusCode: Int(obj.value(forKey: "statusCode") as? Int16 ?? 200),
+                    responseHeaders: headers,
+                    responseBody: obj.value(forKey: "responseBody") as? String ?? "",
+                    isEnabled: obj.value(forKey: "isEnabled") as? Bool ?? true,
+                    createdAt: obj.value(forKey: "createdAt") as? Date ?? Date(),
+                    updatedAt: obj.value(forKey: "updatedAt") as? Date ?? Date()
+                )
+            }
         }
     }
 
     func saveRoute(_ route: MockRoute) async throws -> MockRoute {
-        let context = stack.backgroundContext
+        let context = stack.newBackgroundContext()
         return try await context.perform {
-            let request = NSFetchRequest<MockRouteEntity>(entityName: "MockRouteEntity")
+            let request = NSFetchRequest<NSManagedObject>(entityName: "Route")
             request.predicate = NSPredicate(format: "id == %@", route.id as CVarArg)
 
-            let entity: MockRouteEntity
+            let entity: NSManagedObject
             if let existing = try context.fetch(request).first {
                 entity = existing
             } else {
-                entity = MockRouteEntity(context: context)
-                entity.id = route.id
-                entity.createdAt = route.createdAt
+                entity = NSEntityDescription.insertNewObject(forEntityName: "Route", into: context)
+                entity.setValue(route.id, forKey: "id")
+                entity.setValue(route.createdAt, forKey: "createdAt")
             }
 
-            entity.workspaceId = route.workspaceId
-            entity.name = route.name
-            entity.path = route.path
-            entity.method = route.method.rawValue
-            entity.statusCode = Int16(route.statusCode)
-            entity.responseBody = route.responseBody
-            entity.responseHeaders = self.encodeHeaders(route.responseHeaders)
-            entity.isEnabled = route.isEnabled
-            entity.updatedAt = Date()
+            entity.setValue(route.workspaceId, forKey: "workspaceId")
+            entity.setValue(route.name, forKey: "name")
+            entity.setValue(route.method.rawValue, forKey: "method")
+            entity.setValue(route.path, forKey: "path")
+            entity.setValue(Int16(route.statusCode), forKey: "statusCode")
+            entity.setValue(route.responseBody, forKey: "responseBody")
 
-            // Link to workspace if exists
-            if let workspaceId = route.workspaceId {
-                let workspaceRequest = NSFetchRequest<MockWorkspaceEntity>(entityName: "MockWorkspaceEntity")
-                workspaceRequest.predicate = NSPredicate(format: "id == %@", workspaceId as CVarArg)
-                if let workspace = try context.fetch(workspaceRequest).first {
-                    entity.workspace = workspace
-                }
+            if let headersData = try? JSONEncoder().encode(route.responseHeaders),
+               let headersString = String(data: headersData, encoding: .utf8) {
+                entity.setValue(headersString, forKey: "responseHeaders")
             }
 
-            guard self.stack.save(context: context) else {
-                throw CoreDataError.saveFailed
-            }
+            entity.setValue(route.isEnabled, forKey: "isEnabled")
+            entity.setValue(Date(), forKey: "updatedAt")
 
-            return entity.toModel()
+            try context.save()
+            return route
         }
     }
 
     func deleteRoute(id: UUID) async throws {
-        let context = stack.backgroundContext
+        let context = stack.newBackgroundContext()
         try await context.perform {
-            let request = NSFetchRequest<MockRouteEntity>(entityName: "MockRouteEntity")
+            let request = NSFetchRequest<NSManagedObject>(entityName: "Route")
             request.predicate = NSPredicate(format: "id == %@", id as CVarArg)
 
-            guard let entity = try context.fetch(request).first else {
-                throw CoreDataError.notFound
-            }
-
-            context.delete(entity)
-
-            guard self.stack.save(context: context) else {
-                throw CoreDataError.saveFailed
+            if let entity = try context.fetch(request).first {
+                context.delete(entity)
+                try context.save()
             }
         }
     }
-
-    private func encodeHeaders(_ headers: [String: String]) -> String? {
-        guard let data = try? JSONEncoder().encode(headers),
-              let string = String(data: data, encoding: .utf8) else {
-            return nil
-        }
-        return string
-    }
 }
 
-private enum CoreDataError: Error {
-    case saveFailed
-    case notFound
-}
+private let actor = CoreDataActor()
 
-private let coreDataActor = CoreDataActor()
-
-// MARK: - DependencyKey
+// MARK: - Dependency
 
 extension CoreDataClient: DependencyKey {
     public static let liveValue = CoreDataClient(
-        fetchWorkspaces: {
-            try await coreDataActor.fetchWorkspaces()
-        },
-        saveWorkspace: { workspace in
-            try await coreDataActor.saveWorkspace(workspace)
-        },
-        deleteWorkspace: { id in
-            try await coreDataActor.deleteWorkspace(id: id)
-        },
-        fetchRoutes: { workspaceId in
-            try await coreDataActor.fetchRoutes(workspaceId: workspaceId)
-        },
-        saveRoute: { route in
-            try await coreDataActor.saveRoute(route)
-        },
-        deleteRoute: { id in
-            try await coreDataActor.deleteRoute(id: id)
-        }
+        fetchWorkspaces: { try await actor.fetchWorkspaces() },
+        saveWorkspace: { try await actor.saveWorkspace($0) },
+        deleteWorkspace: { try await actor.deleteWorkspace(id: $0) },
+        fetchRoutes: { try await actor.fetchRoutes(workspaceId: $0) },
+        saveRoute: { try await actor.saveRoute($0) },
+        deleteRoute: { try await actor.deleteRoute(id: $0) }
     )
 
     public static let testValue = CoreDataClient(
