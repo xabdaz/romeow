@@ -10,12 +10,14 @@ public struct MockServerView: View {
 
     public var body: some View {
         NavigationSplitView {
-            // Sidebar - placeholder untuk konsistensi dengan RequestView
-            MockServerSidebarView()
+            MockServerSidebarView(store: store)
         } detail: {
             MockServerDetailView(store: store)
         }
         .navigationSplitViewStyle(.balanced)
+        .onAppear {
+            store.send(.onAppear)
+        }
     }
 }
 
