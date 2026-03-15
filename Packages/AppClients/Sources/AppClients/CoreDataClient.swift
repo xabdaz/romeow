@@ -57,6 +57,11 @@ private final class CoreDataStack: @unchecked Sendable {
             let directoryURL = storeURL.deletingLastPathComponent()
             try? FileManager.default.createDirectory(at: directoryURL, withIntermediateDirectories: true)
 
+            // Remove old store if exists to avoid migration issues during development
+            if FileManager.default.fileExists(atPath: storeURL.path) {
+                try? FileManager.default.removeItem(at: storeURL)
+            }
+
             let description = NSPersistentStoreDescription(url: storeURL)
             description.type = NSSQLiteStoreType
             persistentContainer.persistentStoreDescriptions = [description]
