@@ -1,38 +1,67 @@
+import ComposableArchitecture
 import SwiftUI
 
-struct MockServerSidebarView: View {
-    var body: some View {
+public struct MockServerSidebarView: View {
+    @Bindable var store: StoreOf<MockServerFeature>
+
+    public init(store: StoreOf<MockServerFeature>) {
+        self.store = store
+    }
+
+    public var body: some View {
         VStack(spacing: 0) {
-            // Header
-            HStack {
-                Text("Mock Server")
-                    .font(.headline)
-                Spacer()
-            }
-            .padding()
+            // Workspace picker section
+            WorkspacePicker(store: store)
 
             Divider()
 
-            // Routes List
-            List {
-                Section("Routes") {
-                    HStack {
-                        Text("GET")
-                            .font(.system(.caption, design: .monospaced))
-                            .padding(.horizontal, 6)
-                            .padding(.vertical, 2)
-                            .background(Color.blue.opacity(0.15), in: RoundedRectangle(cornerRadius: 4))
-                            .foregroundStyle(.blue)
-                        Text("/health")
-                            .font(.system(.body, design: .monospaced))
-                        Spacer()
+            // Routes list
+            if store.selectedWorkspaceId != nil {
+                List(selection: .init(
+                    get: { store.selectedRouteId },
+                    set: { store.send(.routeSelected($0)) }
+                )) {
+                    Section("Routes") {
+                        ForEach(store.filteredRoutes) { route in
+                            MockRouteRow(route: route)
+                                .tag(route.id)
+                                .contextMenu {
+                                    Button("Edit") {
+                                        store.send(.editRouteTapped(route.id))
+                                    }
+                                    Button("Delete") {
+                                        store.send(.deleteRouteTapped(route.id))
+                                    }
+                                }
+                        }
                     }
                 }
+                .listStyle(.sidebar)
+            } else {
+                ContentUnavailableView("Select a workspace", systemImage: "folder")
+                    .frame(maxHeight: .infinity)
             }
-            .listStyle(.sidebar)
-
-            Spacer()
         }
         .frame(minWidth: 200)
+        .toolbar {
+            ToolbarItem {
+                Button(action: { store.send(.createRouteTapped) }) {
+                    Label("Add Route", systemImage: "plus")
+                }
+                .disabled(store.selectedWorkspaceId == nil)
+            }
+        }
+        .sheet(isPresented: .init(
+            get: { store.isCreateWorkspaceSheetPresented },
+            set: { if !$0 { store.send(.createWorkspaceSheetDismissed) } }
+        )) {
+            CreateWorkspaceSheet(store: store)
+        }
+        .sheet(isPresented: .init(
+            get: { store.isRouteEditorSheetPresented },
+            set: { if !$0 { store.send(.routeEditorSheetDismissed) } }
+        )) {
+            RouteEditorSheet(store: store)
+        }
     }
 }

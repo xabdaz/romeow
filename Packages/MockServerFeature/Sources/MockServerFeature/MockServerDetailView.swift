@@ -1,7 +1,142 @@
 import ComposableArchitecture
+import SharedModels
 import SwiftUI
 
 struct MockServerDetailView: View {
+    let store: StoreOf<MockServerFeature>
+
+    var body: some View {
+        Group {
+            if let routeId = store.selectedRouteId,
+               let route = store.routes.first(where: { $0.id == routeId }) {
+                RouteDetailView(route: route)
+            } else {
+                ServerControlView(store: store)
+            }
+        }
+        .toolbar {
+            ToolbarItem(placement: .navigation) {
+                Button(action: { store.send(.delegate(.featureSwitcherTapped)) }) {
+                    HStack(spacing: 4) {
+                        Image(systemName: "server.rack")
+                        Text("Mock Server")
+                            .fontWeight(.semibold)
+                        Image(systemName: "chevron.down")
+                            .font(.caption)
+                    }
+                }
+                .buttonStyle(.plain)
+            }
+        }
+    }
+}
+
+// MARK: - Route Detail View (Read-only)
+
+private struct RouteDetailView: View {
+    let route: MockRoute
+
+    var body: some View {
+        ScrollView {
+            VStack(alignment: .leading, spacing: 16) {
+                // Header
+                HStack {
+                    Text(route.method.rawValue)
+                        .font(.title3.bold())
+                        .foregroundStyle(methodColor)
+                    Text(route.path)
+                        .font(.title3)
+                        .textSelection(.enabled)
+                    Spacer()
+                    StatusBadge(isEnabled: route.isEnabled)
+                }
+
+                Divider()
+
+                // Details
+                DetailSection(title: "Name") {
+                    Text(route.name)
+                        .textSelection(.enabled)
+                }
+
+                DetailSection(title: "Status Code") {
+                    Text("\(route.statusCode)")
+                }
+
+                DetailSection(title: "Headers") {
+                    if route.responseHeaders.isEmpty {
+                        Text("No headers")
+                            .foregroundStyle(.secondary)
+                    } else {
+                        Text(formatHeaders(route.responseHeaders))
+                            .font(.system(.caption, design: .monospaced))
+                            .textSelection(.enabled)
+                    }
+                }
+
+                DetailSection(title: "Response Body") {
+                    Text(route.responseBody)
+                        .font(.system(.body, design: .monospaced))
+                        .textSelection(.enabled)
+                }
+
+                Spacer()
+            }
+            .padding()
+        }
+        .frame(minWidth: 400)
+    }
+
+    private var methodColor: Color {
+        switch route.method {
+        case .get: return .blue
+        case .post: return .green
+        case .put: return .orange
+        case .delete: return .red
+        default: return .gray
+        }
+    }
+
+    private func formatHeaders(_ headers: [String: String]) -> String {
+        headers.map { "\($0.key): \($0.value)" }.joined(separator: "\n")
+    }
+}
+
+private struct DetailSection<Content: View>: View {
+    let title: String
+    @ViewBuilder let content: Content
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 4) {
+            Text(title)
+                .font(.caption)
+                .foregroundStyle(.secondary)
+            content
+        }
+    }
+}
+
+private struct StatusBadge: View {
+    let isEnabled: Bool
+
+    var body: some View {
+        HStack(spacing: 4) {
+            Circle()
+                .fill(isEnabled ? Color.green : Color.gray)
+                .frame(width: 8, height: 8)
+            Text(isEnabled ? "Enabled" : "Disabled")
+                .font(.caption)
+        }
+        .padding(.horizontal, 8)
+        .padding(.vertical, 4)
+        .background(isEnabled ? Color.green.opacity(0.1) : Color.gray.opacity(0.1))
+        .clipShape(Capsule())
+    }
+}
+
+// MARK: - Server Control View
+
+private struct ServerControlView: View {
     let store: StoreOf<MockServerFeature>
 
     var body: some View {
@@ -36,30 +171,29 @@ struct MockServerDetailView: View {
                     .multilineTextAlignment(.center)
             }
 
-            Divider()
+            // Route count info
+            if !store.filteredRoutes.isEmpty {
+                Divider()
+                VStack(spacing: 4) {
+                    Text("\(store.filteredRoutes.filter(\.isEnabled).count) enabled routes")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                    if let workspaceName = store.workspaces.first(where: { $0.id == store.selectedWorkspaceId })?.name {
+                        Text("in \"\(workspaceName)\"")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                    }
+                }
+            } else if store.selectedWorkspaceId != nil {
+                ContentUnavailableView("No Routes", systemImage: "doc.text")
+                    .frame(maxHeight: 200)
+            }
 
-            // Default routes info
-            defaultRoutesInfo
+            Spacer()
         }
         .padding(32)
         .frame(minWidth: 360)
-        .toolbar {
-            ToolbarItem(placement: .navigation) {
-                Button(action: { store.send(.delegate(.featureSwitcherTapped)) }) {
-                    HStack(spacing: 4) {
-                        Image(systemName: "server.rack")
-                        Text("Mock Server")
-                            .fontWeight(.semibold)
-                        Image(systemName: "chevron.down")
-                            .font(.caption)
-                    }
-                }
-                .buttonStyle(.plain)
-            }
-        }
     }
-
-    // MARK: - Subviews
 
     private var serverStatusBadge: some View {
         HStack(spacing: 8) {
@@ -91,32 +225,5 @@ struct MockServerDetailView: View {
         }
         .padding(12)
         .background(.quaternary, in: RoundedRectangle(cornerRadius: 8))
-    }
-
-    private var defaultRoutesInfo: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            Text("Default Routes")
-                .font(.caption)
-                .foregroundStyle(.secondary)
-
-            HStack {
-                Text("GET")
-                    .font(.system(.caption, design: .monospaced))
-                    .padding(.horizontal, 6)
-                    .padding(.vertical, 2)
-                    .background(Color.blue.opacity(0.15), in: RoundedRectangle(cornerRadius: 4))
-                    .foregroundStyle(.blue)
-
-                Text("/health")
-                    .font(.system(.caption, design: .monospaced))
-
-                Spacer()
-
-                Text("200 OK")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-            }
-        }
-        .frame(maxWidth: .infinity, alignment: .leading)
     }
 }
