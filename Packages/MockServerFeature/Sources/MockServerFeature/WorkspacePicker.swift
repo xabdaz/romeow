@@ -17,10 +17,10 @@ public struct WorkspacePicker: View {
 
                 Spacer()
 
-                Button(action: { store.send(.createWorkspaceTapped) }) {
-                    Image(systemName: "folder.badge.plus")
+                Button(action: { store.send(.createRouteTapped) }) {
+                    Label("Add Route", systemImage: "plus")
                 }
-                .buttonStyle(.borderless)
+                .disabled(store.selectedWorkspaceId == nil)
 
                 if let selectedId = store.selectedWorkspaceId {
                     Button(action: { store.send(.deleteWorkspaceTapped(selectedId)) }) {

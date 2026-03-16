@@ -45,10 +45,10 @@ public struct MockServerSidebarView: View {
         .frame(minWidth: 200)
         .toolbar {
             ToolbarItem {
-                Button(action: { store.send(.createRouteTapped) }) {
-                    Label("Add Route", systemImage: "plus")
+                Button(action: { store.send(.createWorkspaceTapped) }) {
+                    Image(systemName: "folder.badge.plus")
                 }
-                .disabled(store.selectedWorkspaceId == nil)
+                .buttonStyle(.borderless)
             }
         }
         .sheet(isPresented: .init(
