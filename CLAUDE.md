@@ -6,13 +6,13 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 **romeow** adalah aplikasi macOS berbasis SwiftUI yang berfungsi sebagai klien API dan mock API — untuk membuat HTTP request, melihat response, serta menjalankan mock server lokal.
 
-- **Platform:** macOS 26.2+
-- **Language:** Swift 5.0
+- **Platform:** macOS 14+
+- **Language:** Swift 5.9+
 - **UI Framework:** SwiftUI
 - **Architecture:** TCA (The Composable Architecture) + Multi Local SPM Package
 - **Bundle ID:** `com.xabdaz.romeow`
 - **HTTP Server:** Hummingbird v2 (untuk mock server engine)
-- **App Mode:** Menu bar app (`MenuBarExtra`) + optional main window
+- **Persistence:** Core Data (programmatic model, generic NSManagedObject)
 
 ## Build & Test Commands
 
@@ -40,14 +40,16 @@ Menggunakan **TCA (The Composable Architecture)** dengan struktur **Multi Local 
 romeow/
 ├── romeow/                   # App target (entry point saja)
 │   ├── romeowApp.swift
-│   └── ContentView.swift
+│   ├── ContentView.swift
+│   ├── MenuBarView.swift
+│   └── CoreData/
 └── Packages/
     ├── AppFeature/           # Root reducer + NavigationSplitView
     ├── RequestFeature/       # HTTP request builder (method, URL, headers, body)
     ├── ResponseFeature/      # Response viewer (status, headers, body, timing)
-    ├── MockServerFeature/    # Mock API engine (define routes, start/stop server)
-    ├── SharedModels/         # Tipe data bersama: APIRequest, APIResponse, MockRoute
-    └── Dependencies/         # TCA dependency clients: URLSessionClient, MockServerClient
+    ├── MockServerFeature/    # Mock API engine with workspace support
+    ├── SharedModels/         # Tipe data bersama: APIRequest, APIResponse, MockRoute, MockWorkspace
+    └── AppClients/           # TCA dependency clients: URLSessionClient, MockServerClient, CoreDataClient
 ```
 
 ### Alur Data TCA
@@ -58,68 +60,88 @@ Setiap feature mengikuti pola standar TCA:
 View → Action → Reducer → Effect → (State update / Dependency call)
 ```
 
-- **State** — nilai immutable yang di-render oleh View
+- **State** — nilai immutable yang di-render oleh View, menggunakan `@ObservableState` macro
 - **Action** — enum yang merepresentasikan "apa yang terjadi" (bukan "apa yang harus dilakukan")
-- **Reducer** — pure function yang memutasi State dan menghasilkan Effect
-- **Effect** — async work (network request, server, dll) yang dikembalikan sebagai `Effect<Action>`
-- **Dependency** — diakses via `@Dependency(\.namaClient)` di dalam Reducer
+- **Reducer** — `@Reducer` struct dengan `body` property yang mengkomposisi reducer lain
+- **Effect** — async work yang dikembalikan sebagai `Effect<Action>`, menggunakan `.run { send in }`
+- **Dependency** — diakses via `@Dependency(\.clientName)` di dalam Reducer
 
-### Navigation
+### Feature Composition Pattern
 
-Menggunakan `NavigationSplitView` (macOS pattern: sidebar + detail):
-- **Sidebar** — daftar fitur (Request Builder, Mock Server, Collections)
-- **Detail** — konten fitur yang dipilih, di-drive oleh selection state di `AppFeature`
-
-### Dependencies
-
-Semua I/O diabstraksi sebagai TCA dependency client di package `Dependencies/`:
-
-| Client | Kegunaan |
-|---|---|
-| `URLSessionClient` | Eksekusi HTTP request |
-| `MockServerClient` | Start/stop mock server, register route |
-
-Setiap client memiliki `liveValue` (implementasi nyata) dan `testValue` (mock) sehingga reducer bisa di-test tanpa network atau server sungguhan.
-
-### Menu Bar & Background Mode
-
-App berjalan sebagai **menu bar app** menggunakan `MenuBarExtra` (SwiftUI native, macOS 13+):
-- **Menu bar icon** — menampilkan status mock server (aktif/nonaktif) dan shortcut aksi cepat
-- **Main window** — bisa dibuka dari menu bar, berisi full UI (Request Builder, Response Viewer, Mock Server manager)
-- App tetap hidup di background selama mock server berjalan
+Features dikomposisi menggunakan `Scope` dan `Reduce`:
 
 ```swift
-@main
-struct romeowApp: App {
-    var body: some Scene {
-        MenuBarExtra("romeow", systemImage: "network") {
-            MenuBarView() // status server + quick actions
-        }
-        Window("romeow", id: "main") {
-            AppView()    // full UI
-        }
+public var body: some ReducerOf<Self> {
+    Scope(state: \.childFeature, action: \.childFeature) {
+        ChildFeature()
+    }
+    Reduce { state, action in
+        // Handle actions and delegate from child
     }
 }
 ```
 
+Child features mengkomunikasikan ke parent via `Delegate` action pattern:
+
+```swift
+public enum Action {
+    case delegate(Delegate)
+    public enum Delegate {
+        case featureSwitcherTapped
+    }
+}
+```
+
+### Dependencies
+
+Semua I/O diabstraksi sebagai TCA dependency client di package `AppClients/`:
+
+| Client | Kegunaan |
+|---|---|
+| `URLSessionClient` | Eksekusi HTTP request via URLSession |
+| `MockServerClient` | Start/stop Hummingbird mock server |
+| `CoreDataClient` | CRUD workspace dan route ke Core Data |
+
+Setiap client adalah struct dengan closure properties dan mengkonform `DependencyKey`:
+
+```swift
+public struct SomeClient: Sendable {
+    public var doSomething: @Sendable () async throws -> Result
+}
+
+extension SomeClient: DependencyKey {
+    public static let liveValue = SomeClient(...)  // Implementasi nyata
+    public static let testValue = SomeClient(...)  // Mock untuk test
+}
+```
+
+### Mock Server dengan Workspace
+
+`MockServerFeature` mengorganisir routes dalam **workspaces** yang dipersist ke Core Data:
+
+- **Workspace** — container untuk sekelompok routes (contoh: "Project API", "Mobile Backend")
+- **Route** — endpoint mock dengan method, path, status code, response body, dan headers
+- **Persistence** — Core Data dengan programmatic model (tidak menggunakan .xcdatamodeld)
+
+Pattern Core Data:
+- Menggunakan generic `NSManagedObject` (tidak ada subclass entity)
+- Model didefinisikan programmatic di `CoreDataStack.createModel()`
+- Actor-based (`CoreDataActor`) untuk thread safety
+- Store di `~/Library/Application Support/romeow/MockAPI.sqlite`
+
 ### Mock Server Engine
 
-Menggunakan **Hummingbird v2** sebagai embedded HTTP server di dalam `MockServerFeature`:
-
-- Native `async/await` — kompatibel langsung dengan TCA `Effect`
-- Ringan, tanpa dependency besar (tidak seperti Vapor)
-- Start/stop dikontrol via `MockServerClient` dependency dari TCA
+Menggunakan **Hummingbird v2** sebagai embedded HTTP server:
 
 ```swift
-// MockServerClient.liveValue — start/stop server programatically
-func start(routes: [MockRoute]) async throws -> HBApplication
-func stop(_ app: HBApplication) async throws
+// MockServerClient.liveValue — start/stop server via actor
+func start(port: Int, routes: [MockRoute]) async throws
+func stop() async throws
 ```
 
-SPM dependency di `MockServerFeature/Package.swift`:
-```swift
-.package(url: "https://github.com/hummingbird-project/hummingbird.git", from: "2.0.0")
-```
+- Native `async/await` — kompatibel dengan TCA `Effect`
+- Routes diregister dynamic saat server start
+- Server berjalan di background Task yang bisa di-cancel
 
 ### Testing
 

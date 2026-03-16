@@ -8,18 +8,31 @@ import SharedModels
 private actor ServerManager {
     private var serverTask: Task<Void, any Error>?
 
+    // Reserved paths yang gak bisa di-override user
+    private let reservedPaths = ["/health"]
+
     func start(port: Int, routes: [MockRoute]) {
         serverTask?.cancel()
         serverTask = Task {
             let router = Router()
 
-            // Default health route
+            // Filter out reserved routes dari user routes
+            let userRoutes = routes.filter { route in
+                guard route.isEnabled else { return false }
+                if reservedPaths.contains(route.path.lowercased()) {
+                    print("[MockServer] Skipping reserved route: \(route.path)")
+                    return false
+                }
+                return true
+            }
+
+            // Default health route (only if user doesn't override - tapi kita skip aja)
             router.get("/health") { _, _ -> String in
                 #"{"status":"ok"}"#
             }
 
             // User-defined routes
-            for route in routes where route.isEnabled {
+            for route in userRoutes {
                 guard let method = HTTPRequest.Method(route.method.rawValue) else { continue }
                 let capturedRoute = route
                 router.on(RouterPath(capturedRoute.path), method: method) { _, _ -> Response in

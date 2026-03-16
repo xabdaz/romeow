@@ -53,10 +53,17 @@ private final class CoreDataStack: @unchecked Sendable {
             let directoryURL = storeURL.deletingLastPathComponent()
             try? FileManager.default.createDirectory(at: directoryURL, withIntermediateDirectories: true)
 
-            // Clear old store during development
-            if FileManager.default.fileExists(atPath: storeURL.path) {
-                try? FileManager.default.removeItem(at: storeURL)
-            }
+            // DEBUG: Log store location
+            print("[CoreData] Store URL: \(storeURL.path)")
+            print("[CoreData] Store exists: \(FileManager.default.fileExists(atPath: storeURL.path))")
+
+            // WARNING: Only enable this for development/clear data
+            // This will DELETE ALL DATA on every app launch!
+            // Uncomment below to reset:
+            // if FileManager.default.fileExists(atPath: storeURL.path) {
+            //     print("[CoreData] Clearing existing store...")
+            //     try? FileManager.default.removeItem(at: storeURL)
+            // }
 
             let description = NSPersistentStoreDescription(url: storeURL)
             description.type = NSSQLiteStoreType
@@ -175,6 +182,7 @@ private actor CoreDataActor {
             request.sortDescriptors = [NSSortDescriptor(key: "createdAt", ascending: false)]
 
             let results = try context.fetch(request)
+            print("[CoreData] Fetched \(results.count) workspaces")
             return results.map { obj in
                 MockWorkspace(
                     id: obj.value(forKey: "id") as? UUID ?? UUID(),
@@ -193,18 +201,22 @@ private actor CoreDataActor {
             request.predicate = NSPredicate(format: "id == %@", workspace.id as CVarArg)
 
             let entity: NSManagedObject
+            let isNew: Bool
             if let existing = try context.fetch(request).first {
                 entity = existing
+                isNew = false
             } else {
                 entity = NSEntityDescription.insertNewObject(forEntityName: "Workspace", into: context)
                 entity.setValue(workspace.id, forKey: "id")
                 entity.setValue(workspace.createdAt, forKey: "createdAt")
+                isNew = true
             }
 
             entity.setValue(workspace.name, forKey: "name")
             entity.setValue(Date(), forKey: "updatedAt")
 
             try context.save()
+            print("[CoreData] \(isNew ? "Created" : "Updated") workspace: \(workspace.name) (\(workspace.id))")
             return workspace
         }
     }
@@ -218,6 +230,9 @@ private actor CoreDataActor {
             if let entity = try context.fetch(request).first {
                 context.delete(entity)
                 try context.save()
+                print("[CoreData] Deleted workspace: \(id)")
+            } else {
+                print("[CoreData] Workspace not found for deletion: \(id)")
             }
         }
     }
@@ -234,6 +249,7 @@ private actor CoreDataActor {
             request.sortDescriptors = [NSSortDescriptor(key: "createdAt", ascending: false)]
 
             let results = try context.fetch(request)
+            print("[CoreData] Fetched \(results.count) routes" + (workspaceId != nil ? " for workspace \(workspaceId!)" : ""))
             return results.map { obj in
                 let headersString = obj.value(forKey: "responseHeaders") as? String
                 let headers: [String: String]
@@ -268,12 +284,15 @@ private actor CoreDataActor {
             request.predicate = NSPredicate(format: "id == %@", route.id as CVarArg)
 
             let entity: NSManagedObject
+            let isNew: Bool
             if let existing = try context.fetch(request).first {
                 entity = existing
+                isNew = false
             } else {
                 entity = NSEntityDescription.insertNewObject(forEntityName: "Route", into: context)
                 entity.setValue(route.id, forKey: "id")
                 entity.setValue(route.createdAt, forKey: "createdAt")
+                isNew = true
             }
 
             entity.setValue(route.workspaceId, forKey: "workspaceId")
@@ -292,6 +311,7 @@ private actor CoreDataActor {
             entity.setValue(Date(), forKey: "updatedAt")
 
             try context.save()
+            print("[CoreData] \(isNew ? "Created" : "Updated") route: \(route.name) (\(route.method.rawValue) \(route.path))")
             return route
         }
     }
@@ -305,6 +325,9 @@ private actor CoreDataActor {
             if let entity = try context.fetch(request).first {
                 context.delete(entity)
                 try context.save()
+                print("[CoreData] Deleted route: \(id)")
+            } else {
+                print("[CoreData] Route not found for deletion: \(id)")
             }
         }
     }
