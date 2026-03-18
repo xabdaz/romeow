@@ -1,3 +1,4 @@
+import SharedModels
 import SwiftUI
 
 enum RequestConfigTab: String, CaseIterable {
@@ -11,7 +12,7 @@ struct RequestConfigTabBar: View {
     let headerCount: Int
 
     var body: some View {
-        HStack(spacing: 24) {
+        HStack(spacing: Spacing.xxLarge) {
             ForEach(RequestConfigTab.allCases, id: \.self) { tab in
                 RequestConfigTabItem(
                     tab: tab,
@@ -25,9 +26,9 @@ struct RequestConfigTabBar: View {
             }
             Spacer()
         }
-        .padding(.horizontal, 16)
-        .padding(.vertical, 8)
-        .background(Color(nsColor: .windowBackgroundColor))
+        .padding(.horizontal, Spacing.large)
+        .padding(.vertical, Spacing.small)
+        .background(Color.rmeWindowBackground)
     }
 }
 
@@ -39,22 +40,21 @@ struct RequestConfigTabItem: View {
 
     var body: some View {
         Button(action: action) {
-            VStack(spacing: 6) {
-                HStack(spacing: 4) {
+            VStack(spacing: Spacing.small) {
+                HStack(spacing: Spacing.xSmall) {
                     Text(tab.rawValue)
-                        .font(.system(size: 13, weight: isSelected ? .medium : .regular))
+                        .font(isSelected ? .rmeBodyMedium : .rmeBody)
                         .foregroundColor(isSelected ? .primary : .secondary)
 
                     if let count = badgeCount, count > 0 {
                         Text("(\(count))")
-                            .font(.system(size: 13, weight: .regular))
-                            .foregroundColor(.green)
+                            .font(.rmeBody)
+                            .foregroundColor(.rmeSuccess)
                     }
                 }
 
-                // Underline indicator
                 Rectangle()
-                    .fill(isSelected ? Color.green : Color.clear)
+                    .fill(isSelected ? Color.rmeSuccess : Color.clear)
                     .frame(height: 2)
                     .animation(.easeInOut(duration: 0.2), value: isSelected)
             }
@@ -72,5 +72,5 @@ struct RequestConfigTabItem: View {
         Spacer()
     }
     .frame(width: 400, height: 300)
-    .background(Color(nsColor: .windowBackgroundColor))
+    .background(Color.rmeWindowBackground)
 }

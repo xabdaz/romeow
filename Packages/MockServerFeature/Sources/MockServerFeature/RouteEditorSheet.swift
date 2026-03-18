@@ -53,11 +53,11 @@ public struct RouteEditorSheet: View {
                     .accessibilityIdentifier("routeStatusCodeField")
 
                     // Headers JSON Editor
-                    VStack(alignment: .leading, spacing: 4) {
+                    VStack(alignment: .leading, spacing: Spacing.xSmall) {
                         HStack {
                             Text("Headers (JSON)")
-                                .font(.caption)
-                                .foregroundStyle(.secondary)
+                                .font(.rmeCaption)
+                                .foregroundStyle(Color.rmeSecondaryText)
 
                             Spacer()
 
@@ -65,7 +65,7 @@ public struct RouteEditorSheet: View {
                                 formatHeaders()
                             }
                             .buttonStyle(.borderless)
-                            .font(.caption)
+                            .font(.rmeCaption)
                             .accessibilityIdentifier("formatHeadersButton")
                         }
 
@@ -84,25 +84,25 @@ public struct RouteEditorSheet: View {
                     }
 
                     // Response Body JSON Editor
-                    VStack(alignment: .leading, spacing: 4) {
+                    VStack(alignment: .leading, spacing: Spacing.xSmall) {
                         HStack {
                             Text("Response Body")
-                                .font(.caption)
-                                .foregroundStyle(.secondary)
+                                .font(.rmeCaption)
+                                .foregroundStyle(Color.rmeSecondaryText)
 
                             Spacer()
 
                             if let error = bodyJsonError {
                                 Label(error, systemImage: "exclamationmark.triangle")
-                                    .font(.caption)
-                                    .foregroundStyle(.red)
+                                    .font(.rmeCaption)
+                                    .foregroundStyle(Color.rmeError)
                             }
 
                             Button("Format") {
                                 formatBody()
                             }
                             .buttonStyle(.borderless)
-                            .font(.caption)
+                            .font(.rmeCaption)
                             .disabled(bodyJsonError != nil)
                             .accessibilityIdentifier("formatBodyButton")
                         }
@@ -251,15 +251,15 @@ struct JSONTextEditor: View {
 
     var body: some View {
         TextEditor(text: $text)
-            .font(.system(.body, design: .monospaced))
+            .font(.rmeMonospaced)
             .scrollContentBackground(.hidden)
             .background(
-                RoundedRectangle(cornerRadius: 6)
-                    .fill(Color(NSColor.textBackgroundColor))
+                RoundedRectangle(cornerRadius: CornerRadius.medium)
+                    .fill(Color.rmeTextBackground)
             )
             .overlay(
-                RoundedRectangle(cornerRadius: 6)
-                    .stroke(error != nil ? Color.red : Color.gray.opacity(0.3), lineWidth: 1)
+                RoundedRectangle(cornerRadius: CornerRadius.medium)
+                    .stroke(error != nil ? Color.rmeError : Color.rmeBorder, lineWidth: BorderWidth.thin)
             )
     }
 }

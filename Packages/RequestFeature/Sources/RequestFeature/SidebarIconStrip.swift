@@ -1,10 +1,11 @@
+import SharedModels
 import SwiftUI
 
 struct SidebarIconStrip: View {
     @Binding var activeTab: SidebarTab
 
     var body: some View {
-        VStack(spacing: 4) {
+        VStack(spacing: Spacing.xSmall) {
             ForEach(SidebarTab.allCases, id: \.self) { tab in
                 SidebarIconButton(
                     icon: tab.icon,
@@ -16,8 +17,8 @@ struct SidebarIconStrip: View {
             }
             Spacer()
         }
-        .padding(.vertical, 8)
-        .frame(width: 64)
-        .background(Color(NSColor.controlBackgroundColor))
+        .padding(.vertical, Spacing.small)
+        .frame(width: FrameSize.sidebarMin)
+        .background(Color.rmeSurface)
     }
 }

@@ -1,4 +1,5 @@
 import ComposableArchitecture
+import SharedModels
 import SwiftUI
 
 public struct FeatureSwitcherOverlay: View {
@@ -10,14 +11,12 @@ public struct FeatureSwitcherOverlay: View {
 
     public var body: some View {
         ZStack {
-            // Background overlay (tap to dismiss)
-            Color.black.opacity(0.2)
+            Color.rmeSecondaryText.opacity(0.2)
                 .ignoresSafeArea()
                 .onTapGesture {
                     store.send(.featureSwitcherTapped)
                 }
 
-            // Feature switcher menu
             VStack(spacing: 0) {
                 FeatureSwitcherItem(
                     icon: "network",
@@ -42,9 +41,9 @@ public struct FeatureSwitcherOverlay: View {
                 )
             }
             .frame(width: 280)
-            .background(Color(NSColor.controlBackgroundColor))
-            .clipShape(RoundedRectangle(cornerRadius: 12))
-            .shadow(color: .black.opacity(0.2), radius: 16, x: 0, y: 8)
+            .background(Color.rmeSurface)
+            .clipShape(RoundedRectangle(cornerRadius: CornerRadius.xxLarge))
+            .shadow(color: Color.rmeSecondaryText.opacity(0.2), radius: 16, x: 0, y: 8)
         }
     }
 }

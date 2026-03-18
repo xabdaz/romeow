@@ -1,4 +1,5 @@
 import ComposableArchitecture
+import SharedModels
 import SwiftUI
 
 public struct FeatureSwitcherItem: View {
@@ -24,35 +25,35 @@ public struct FeatureSwitcherItem: View {
 
     public var body: some View {
         Button(action: onSelect) {
-            HStack(spacing: 12) {
+            HStack(spacing: Spacing.medium) {
                 Image(systemName: icon)
-                    .font(.system(size: 20))
+                    .font(.rmeTitle2)
                     .foregroundStyle(.primary)
                     .frame(width: 32)
 
-                VStack(alignment: .leading, spacing: 2) {
+                VStack(alignment: .leading, spacing: Spacing.xxSmall) {
                     Text(title)
-                        .font(.system(size: 14, weight: .semibold))
+                        .font(.rmeCalloutSemibold)
                         .foregroundStyle(.primary)
 
                     Text(subtitle)
-                        .font(.system(size: 11))
-                        .foregroundStyle(.secondary)
+                        .font(.rmeFootnote)
+                        .foregroundStyle(Color.rmeSecondaryText)
                 }
 
                 Spacer()
 
                 if isSelected {
                     Image(systemName: "checkmark")
-                        .font(.system(size: 12, weight: .semibold))
+                        .font(.rmeCaptionBold)
                         .foregroundStyle(Color.accentColor)
                 }
             }
-            .padding(.horizontal, 16)
-            .padding(.vertical, 12)
+            .padding(.horizontal, Spacing.large)
+            .padding(.vertical, Spacing.medium)
             .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
-        .background(isSelected ? Color.blue.opacity(0.1) : Color.clear)
+        .background(isSelected ? Color.rmeSelectionBackground : Color.clear)
     }
 }

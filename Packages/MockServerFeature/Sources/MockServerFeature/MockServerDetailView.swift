@@ -17,18 +17,17 @@ struct MockServerDetailView: View {
         .toolbar {
             ToolbarItem(placement: .navigation) {
                 Button(action: { store.send(.delegate(.featureSwitcherTapped)) }) {
-                    HStack(spacing: 4) {
+                    HStack(spacing: Spacing.xSmall) {
                         Image(systemName: "server.rack")
                         Text("Mock Server")
                             .fontWeight(.semibold)
                         Image(systemName: "chevron.down")
-                            .font(.caption)
+                            .font(.rmeCaption)
                     }
                 }
                 .buttonStyle(.plain)
             }
 
-            // Start/Stop Server button di kanan atas
             ToolbarItem(placement: .primaryAction) {
                 ServerToolbarButton(store: store)
             }
@@ -36,21 +35,18 @@ struct MockServerDetailView: View {
     }
 }
 
-// MARK: - Route Detail View (Read-only)
-
 private struct RouteDetailView: View {
     let route: MockRoute
 
     var body: some View {
         ScrollView {
-            VStack(alignment: .leading, spacing: 16) {
-                // Header
+            VStack(alignment: .leading, spacing: Spacing.large) {
                 HStack {
                     Text(route.method.rawValue)
-                        .font(.title3.bold())
-                        .foregroundStyle(methodColor)
+                        .font(.rmeTitle3Semibold)
+                        .foregroundStyle(Color.httpMethod(route.method))
                     Text(route.path)
-                        .font(.title3)
+                        .font(.rmeTitle3)
                         .textSelection(.enabled)
                     Spacer()
                     StatusBadge(isEnabled: route.isEnabled)
@@ -58,7 +54,6 @@ private struct RouteDetailView: View {
 
                 Divider()
 
-                // Details
                 DetailSection(title: "Name") {
                     Text(route.name)
                         .textSelection(.enabled)
@@ -71,17 +66,17 @@ private struct RouteDetailView: View {
                 DetailSection(title: "Headers") {
                     if route.responseHeaders.isEmpty {
                         Text("No headers")
-                            .foregroundStyle(.secondary)
+                            .foregroundStyle(Color.rmeSecondaryText)
                     } else {
                         Text(formatHeaders(route.responseHeaders))
-                            .font(.system(.caption, design: .monospaced))
+                            .font(.rmeMonospacedCaption)
                             .textSelection(.enabled)
                     }
                 }
 
                 DetailSection(title: "Response Body") {
                     Text(route.responseBody)
-                        .font(.system(.body, design: .monospaced))
+                        .font(.rmeMonospaced)
                         .textSelection(.enabled)
                 }
 
@@ -89,17 +84,7 @@ private struct RouteDetailView: View {
             }
             .padding()
         }
-        .frame(minWidth: 400)
-    }
-
-    private var methodColor: Color {
-        switch route.method {
-        case .get: return .blue
-        case .post: return .green
-        case .put: return .orange
-        case .delete: return .red
-        default: return .gray
-        }
+        .frame(minWidth: FrameSize.detailMin)
     }
 
     private func formatHeaders(_ headers: [String: String]) -> String {
@@ -112,10 +97,10 @@ private struct DetailSection<Content: View>: View {
     @ViewBuilder let content: Content
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 4) {
+        VStack(alignment: .leading, spacing: Spacing.xSmall) {
             Text(title)
-                .font(.caption)
-                .foregroundStyle(.secondary)
+                .font(.rmeCaption)
+                .foregroundStyle(Color.rmeSecondaryText)
             content
         }
     }
@@ -125,23 +110,19 @@ private struct StatusBadge: View {
     let isEnabled: Bool
 
     var body: some View {
-        HStack(spacing: 4) {
+        HStack(spacing: Spacing.xSmall) {
             Circle()
-                .fill(isEnabled ? Color.green : Color.gray)
+                .fill(isEnabled ? Color.rmeSuccess : Color.rmeSecondaryText)
                 .frame(width: 8, height: 8)
             Text(isEnabled ? "Enabled" : "Disabled")
-                .font(.caption)
+                .font(.rmeCaption)
         }
-        .padding(.horizontal, 8)
-        .padding(.vertical, 4)
-        .background(isEnabled ? Color.green.opacity(0.1) : Color.gray.opacity(0.1))
+        .padding(.horizontal, Spacing.small)
+        .padding(.vertical, Spacing.xSmall)
+        .background(isEnabled ? Color.rmeSuccess.opacity(0.1) : Color.rmeSecondaryText.opacity(0.1))
         .clipShape(Capsule())
     }
 }
-
-// MARK: - Server Control View
-
-// MARK: - Toolbar Button
 
 private struct ServerToolbarButton: View {
     let store: StoreOf<MockServerFeature>
@@ -150,64 +131,57 @@ private struct ServerToolbarButton: View {
         Button {
             store.send(store.isRunning ? .stopButtonTapped : .startButtonTapped)
         } label: {
-            HStack(spacing: 6) {
-                // Status dot
+            HStack(spacing: Spacing.small) {
                 Circle()
-                    .fill(store.isRunning ? Color.green : Color.secondary.opacity(0.4))
+                    .fill(store.isRunning ? Color.rmeSuccess : Color.rmeSecondaryText.opacity(0.4))
                     .frame(width: 8, height: 8)
 
                 Text(store.isRunning ? "Stop" : "Start")
                     .fontWeight(.medium)
 
                 Image(systemName: store.isRunning ? "stop.fill" : "play.fill")
-                    .font(.caption)
+                    .font(.rmeCaption)
             }
         }
         .buttonStyle(.bordered)
-        .tint(store.isRunning ? .red : .green)
+        .tint(store.isRunning ? Color.rmeError : Color.rmeSuccess)
         .disabled(store.selectedWorkspaceId == nil || store.filteredRoutes.isEmpty)
         .help(store.isRunning ? "Stop mock server" : "Start mock server on port \(store.port)")
         .accessibilityIdentifier("serverToggleButton")
     }
 }
 
-// MARK: - Server Control View (Info only)
-
 private struct ServerControlView: View {
     let store: StoreOf<MockServerFeature>
 
     var body: some View {
-        VStack(spacing: 24) {
-            // Status indicator (sekarang sebagai info, bukan button)
+        VStack(spacing: Spacing.xxLarge) {
             serverStatusBadge
 
-            // Server URL info
             if store.isRunning {
                 serverURLInfo
             } else {
                 serverStoppedInfo
             }
 
-            // Error message
             if let error = store.errorMessage {
                 Text(error)
-                    .font(.caption)
-                    .foregroundStyle(.red)
+                    .font(.rmeCaption)
+                    .foregroundStyle(Color.rmeError)
                     .multilineTextAlignment(.center)
                     .padding(.horizontal)
             }
 
-            // Route count info
             if !store.filteredRoutes.isEmpty {
                 Divider()
-                VStack(spacing: 4) {
+                VStack(spacing: Spacing.xSmall) {
                     Text("\(store.filteredRoutes.filter(\.isEnabled).count) enabled routes")
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
+                        .font(.rmeCaption)
+                        .foregroundStyle(Color.rmeSecondaryText)
                     if let workspaceName = store.workspaces.first(where: { $0.id == store.selectedWorkspaceId })?.name {
                         Text("in \"\(workspaceName)\"")
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
+                            .font(.rmeCaption)
+                            .foregroundStyle(Color.rmeSecondaryText)
                     }
                 }
             } else if store.selectedWorkspaceId != nil {
@@ -217,19 +191,19 @@ private struct ServerControlView: View {
 
             Spacer()
         }
-        .padding(32)
+        .padding(Spacing.huge)
         .frame(minWidth: 360)
     }
 
     private var serverStatusBadge: some View {
-        HStack(spacing: 8) {
+        HStack(spacing: Spacing.small) {
             Circle()
-                .fill(store.isRunning ? Color.green : Color.secondary.opacity(0.4))
+                .fill(store.isRunning ? Color.rmeSuccess : Color.rmeSecondaryText.opacity(0.4))
                 .frame(width: 10, height: 10)
                 .overlay {
                     if store.isRunning {
                         Circle()
-                            .fill(Color.green.opacity(0.3))
+                            .fill(Color.rmeSuccess.opacity(0.3))
                             .frame(width: 18, height: 18)
                     }
                 }
@@ -242,39 +216,39 @@ private struct ServerControlView: View {
     }
 
     private var serverURLInfo: some View {
-        VStack(spacing: 4) {
+        VStack(spacing: Spacing.xSmall) {
             Text("Listening on")
-                .font(.caption)
-                .foregroundStyle(.secondary)
+                .font(.rmeCaption)
+                .foregroundStyle(Color.rmeSecondaryText)
             Text("http://127.0.0.1:\(store.port)")
-                .font(.system(.body, design: .monospaced))
+                .font(.rmeMonospaced)
                 .textSelection(.enabled)
                 .accessibilityIdentifier("serverURLLabel")
         }
-        .padding(12)
-        .background(.quaternary, in: RoundedRectangle(cornerRadius: 8))
+        .padding(Spacing.medium)
+        .background(Color.rmeSurface, in: RoundedRectangle(cornerRadius: CornerRadius.large))
     }
 
     private var serverStoppedInfo: some View {
-        VStack(spacing: 4) {
+        VStack(spacing: Spacing.xSmall) {
             Text("Server is stopped")
-                .font(.caption)
-                .foregroundStyle(.secondary)
+                .font(.rmeCaption)
+                .foregroundStyle(Color.rmeSecondaryText)
             if store.selectedWorkspaceId == nil {
                 Text("Select a workspace to start")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
+                    .font(.rmeCaption)
+                    .foregroundStyle(Color.rmeSecondaryText)
             } else if store.filteredRoutes.isEmpty {
                 Text("Add routes to start the server")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
+                    .font(.rmeCaption)
+                    .foregroundStyle(Color.rmeSecondaryText)
             } else {
                 Text("Port \(store.port)")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
+                    .font(.rmeCaption)
+                    .foregroundStyle(Color.rmeSecondaryText)
             }
         }
-        .padding(12)
-        .background(.quaternary, in: RoundedRectangle(cornerRadius: 8))
+        .padding(Spacing.medium)
+        .background(Color.rmeSurface, in: RoundedRectangle(cornerRadius: CornerRadius.large))
     }
 }

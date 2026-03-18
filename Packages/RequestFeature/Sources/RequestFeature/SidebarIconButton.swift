@@ -1,3 +1,4 @@
+import SharedModels
 import SwiftUI
 
 struct SidebarIconButton: View {
@@ -8,18 +9,18 @@ struct SidebarIconButton: View {
 
     var body: some View {
         Button(action: action) {
-            VStack(spacing: 2) {
+            VStack(spacing: Spacing.xxSmall) {
                 Image(systemName: icon)
-                    .font(.system(size: 14, weight: .medium))
+                    .font(.rmeCalloutMedium)
                 Text(label)
-                    .font(.system(size: 9, weight: .medium))
+                    .font(.rmeCaption)
                     .lineLimit(1)
             }
             .foregroundStyle(isActive ? .primary : .secondary)
             .frame(width: 56, height: 44)
             .background(
-                RoundedRectangle(cornerRadius: 6)
-                    .fill(isActive ? Color.accentColor.opacity(0.15) : Color.clear)
+                RoundedRectangle(cornerRadius: CornerRadius.medium)
+                    .fill(isActive ? Color.rmeActiveBackground : Color.clear)
             )
         }
         .buttonStyle(.plain)
