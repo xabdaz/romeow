@@ -24,6 +24,7 @@ struct ResponseView: View {
                 }
                 .pickerStyle(.segmented)
                 .padding()
+                .accessibilityIdentifier("responseTabPicker")
 
                 if selectedTab == 0 {
                     ResponseBodyView(response: store.response)

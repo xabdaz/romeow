@@ -23,6 +23,7 @@ struct FeatureSwitcherButton: View {
                 )
         }
         .buttonStyle(.plain)
+        .accessibilityIdentifier("featureSwitcherButton")
         .popover(isPresented: $isShowingGrid, arrowEdge: .bottom) {
             FeatureGridPopup { feature in
                 isShowingGrid = false

@@ -27,6 +27,11 @@ struct MockServerDetailView: View {
                 }
                 .buttonStyle(.plain)
             }
+
+            // Start/Stop Server button di kanan atas
+            ToolbarItem(placement: .primaryAction) {
+                ServerToolbarButton(store: store)
+            }
         }
     }
 }
@@ -136,32 +141,52 @@ private struct StatusBadge: View {
 
 // MARK: - Server Control View
 
+// MARK: - Toolbar Button
+
+private struct ServerToolbarButton: View {
+    let store: StoreOf<MockServerFeature>
+
+    var body: some View {
+        Button {
+            store.send(store.isRunning ? .stopButtonTapped : .startButtonTapped)
+        } label: {
+            HStack(spacing: 6) {
+                // Status dot
+                Circle()
+                    .fill(store.isRunning ? Color.green : Color.secondary.opacity(0.4))
+                    .frame(width: 8, height: 8)
+
+                Text(store.isRunning ? "Stop" : "Start")
+                    .fontWeight(.medium)
+
+                Image(systemName: store.isRunning ? "stop.fill" : "play.fill")
+                    .font(.caption)
+            }
+        }
+        .buttonStyle(.bordered)
+        .tint(store.isRunning ? .red : .green)
+        .disabled(store.selectedWorkspaceId == nil || store.filteredRoutes.isEmpty)
+        .help(store.isRunning ? "Stop mock server" : "Start mock server on port \(store.port)")
+        .accessibilityIdentifier("serverToggleButton")
+    }
+}
+
+// MARK: - Server Control View (Info only)
+
 private struct ServerControlView: View {
     let store: StoreOf<MockServerFeature>
 
     var body: some View {
         VStack(spacing: 24) {
-            // Status indicator
+            // Status indicator (sekarang sebagai info, bukan button)
             serverStatusBadge
 
             // Server URL info
             if store.isRunning {
                 serverURLInfo
+            } else {
+                serverStoppedInfo
             }
-
-            // Start / Stop button
-            Button {
-                store.send(store.isRunning ? .stopButtonTapped : .startButtonTapped)
-            } label: {
-                Label(
-                    store.isRunning ? "Stop Server" : "Start Server",
-                    systemImage: store.isRunning ? "stop.circle.fill" : "play.circle.fill"
-                )
-                .frame(minWidth: 160)
-            }
-            .buttonStyle(.borderedProminent)
-            .tint(store.isRunning ? .red : .green)
-            .controlSize(.large)
 
             // Error message
             if let error = store.errorMessage {
@@ -169,6 +194,7 @@ private struct ServerControlView: View {
                     .font(.caption)
                     .foregroundStyle(.red)
                     .multilineTextAlignment(.center)
+                    .padding(.horizontal)
             }
 
             // Route count info
@@ -212,6 +238,7 @@ private struct ServerControlView: View {
                 .font(.headline)
                 .foregroundStyle(store.isRunning ? .primary : .secondary)
         }
+        .accessibilityIdentifier("serverStatusBadge")
     }
 
     private var serverURLInfo: some View {
@@ -222,6 +249,30 @@ private struct ServerControlView: View {
             Text("http://127.0.0.1:\(store.port)")
                 .font(.system(.body, design: .monospaced))
                 .textSelection(.enabled)
+                .accessibilityIdentifier("serverURLLabel")
+        }
+        .padding(12)
+        .background(.quaternary, in: RoundedRectangle(cornerRadius: 8))
+    }
+
+    private var serverStoppedInfo: some View {
+        VStack(spacing: 4) {
+            Text("Server is stopped")
+                .font(.caption)
+                .foregroundStyle(.secondary)
+            if store.selectedWorkspaceId == nil {
+                Text("Select a workspace to start")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            } else if store.filteredRoutes.isEmpty {
+                Text("Add routes to start the server")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            } else {
+                Text("Port \(store.port)")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
         }
         .padding(12)
         .background(.quaternary, in: RoundedRectangle(cornerRadius: 8))

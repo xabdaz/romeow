@@ -33,8 +33,10 @@ struct RequestHeadersView: View {
             HStack(spacing: 8) {
                 TextField("Key", text: $newKey)
                     .textFieldStyle(.roundedBorder)
+                    .accessibilityIdentifier("headerKeyField")
                 TextField("Value", text: $newValue)
                     .textFieldStyle(.roundedBorder)
+                    .accessibilityIdentifier("headerValueField")
                 Button("Add") {
                     guard !newKey.isEmpty else { return }
                     store.send(.headerAdded(key: newKey, value: newValue))
@@ -42,6 +44,7 @@ struct RequestHeadersView: View {
                     newValue = ""
                 }
                 .disabled(newKey.isEmpty)
+                .accessibilityIdentifier("addHeaderButton")
             }
             .padding()
         }

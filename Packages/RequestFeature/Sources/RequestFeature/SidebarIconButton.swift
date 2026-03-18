@@ -24,5 +24,6 @@ struct SidebarIconButton: View {
         }
         .buttonStyle(.plain)
         .help(label)
+        .accessibilityIdentifier("sidebar_\(label)")
     }
 }

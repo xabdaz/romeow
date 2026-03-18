@@ -14,5 +14,6 @@ struct ErrorStatusBar: View {
         .padding(.horizontal, 16)
         .padding(.vertical, 8)
         .background(.red.opacity(0.1))
+        .accessibilityIdentifier("errorStatusBar")
     }
 }

@@ -16,6 +16,7 @@ public struct CreateWorkspaceSheet: View {
                     get: { store.workspaceFormName },
                     set: { store.send(.workspaceNameChanged($0)) }
                 ))
+                .accessibilityIdentifier("workspaceNameField")
             }
             .formStyle(.grouped)
             .navigationTitle("New Workspace")
@@ -24,12 +25,14 @@ public struct CreateWorkspaceSheet: View {
                     Button("Cancel") {
                         store.send(.createWorkspaceSheetDismissed)
                     }
+                    .accessibilityIdentifier("cancelWorkspaceButton")
                 }
                 ToolbarItem(placement: .confirmationAction) {
                     Button("Save") {
                         store.send(.saveWorkspaceTapped)
                     }
                     .disabled(store.workspaceFormName.isEmpty)
+                    .accessibilityIdentifier("saveWorkspaceButton")
                 }
             }
         }

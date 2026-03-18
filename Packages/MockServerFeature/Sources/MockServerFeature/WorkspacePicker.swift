@@ -21,12 +21,14 @@ public struct WorkspacePicker: View {
                     Label("Add Route", systemImage: "plus")
                 }
                 .disabled(store.selectedWorkspaceId == nil)
+                .accessibilityIdentifier("addRouteButton")
 
                 if let selectedId = store.selectedWorkspaceId {
                     Button(action: { store.send(.deleteWorkspaceTapped(selectedId)) }) {
                         Image(systemName: "trash")
                     }
                     .buttonStyle(.borderless)
+                    .accessibilityIdentifier("deleteWorkspaceButton")
                 }
             }
 
@@ -40,6 +42,7 @@ public struct WorkspacePicker: View {
                 }
             }
             .pickerStyle(.menu)
+            .accessibilityIdentifier("workspacePicker")
         }
         .padding()
     }

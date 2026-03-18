@@ -11,5 +11,6 @@ struct RequestBodyView: View {
         ))
         .font(.system(.body, design: .monospaced))
         .padding(4)
+        .accessibilityIdentifier("requestBodyEditor")
     }
 }

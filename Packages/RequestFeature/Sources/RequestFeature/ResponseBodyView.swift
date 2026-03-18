@@ -10,6 +10,7 @@ struct ResponseBodyView: View {
                 .font(.system(.body, design: .monospaced))
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .padding()
+                .accessibilityIdentifier("responseBodyText")
         }
         .background(Color(NSColor.textBackgroundColor))
     }

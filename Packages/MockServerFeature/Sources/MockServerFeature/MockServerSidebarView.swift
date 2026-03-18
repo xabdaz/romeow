@@ -37,6 +37,7 @@ public struct MockServerSidebarView: View {
                     }
                 }
                 .listStyle(.sidebar)
+                .accessibilityIdentifier("routesList")
             } else {
                 ContentUnavailableView("Select a workspace", systemImage: "folder")
                     .frame(maxHeight: .infinity)
@@ -49,6 +50,7 @@ public struct MockServerSidebarView: View {
                     Image(systemName: "folder.badge.plus")
                 }
                 .buttonStyle(.borderless)
+                .accessibilityIdentifier("createWorkspaceButton")
             }
         }
         .sheet(isPresented: .init(

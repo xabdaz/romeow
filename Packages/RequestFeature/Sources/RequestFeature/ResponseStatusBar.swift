@@ -16,6 +16,7 @@ struct ResponseStatusBar: View {
                     .frame(width: 8, height: 8)
                 Text("\(response.statusCode)")
                     .fontWeight(.semibold)
+                    .accessibilityIdentifier("responseStatusCode")
             }
 
             Divider()
@@ -25,6 +26,7 @@ struct ResponseStatusBar: View {
                 Image(systemName: "clock")
                     .font(.caption)
                 Text(String(format: "%.0f ms", response.duration * 1000))
+                    .accessibilityIdentifier("responseDuration")
             }
 
             Spacer()

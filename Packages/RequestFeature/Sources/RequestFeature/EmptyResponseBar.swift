@@ -10,5 +10,6 @@ struct EmptyResponseBar: View {
         .padding(.horizontal, 16)
         .padding(.vertical, 8)
         .background(Color.secondary.opacity(0.05))
+        .accessibilityIdentifier("emptyResponseBar")
     }
 }

@@ -3,23 +3,43 @@ import SwiftUI
 
 struct RequestConfigView: View {
     let store: StoreOf<RequestFeature>
-    @State private var selectedTab = 0
+    @State private var selectedTab: RequestConfigTab = .body
 
     var body: some View {
         VStack(spacing: 0) {
-            Picker("", selection: $selectedTab) {
-                Text("Body").tag(0)
-                Text("Headers").tag(1)
-            }
-            .pickerStyle(.segmented)
-            .padding()
+            RequestConfigTabBar(
+                selectedTab: $selectedTab,
+                headerCount: store.request.headers.count
+            )
 
-            if selectedTab == 0 {
-                RequestBodyView(store: store)
-            } else {
+            Divider()
+
+            switch selectedTab {
+            case .headers:
                 RequestHeadersView(store: store)
+            case .body:
+                RequestBodyView(store: store)
+            case .scripts:
+                ScriptsPlaceholderView()
             }
         }
         .frame(maxHeight: .infinity)
+        .accessibilityIdentifier("requestConfigView")
+    }
+}
+
+struct ScriptsPlaceholderView: View {
+    var body: some View {
+        VStack {
+            Spacer()
+            Text("Scripts")
+                .font(.headline)
+                .foregroundColor(.secondary)
+            Text("Pre-request and test scripts coming soon")
+                .font(.subheadline)
+                .foregroundColor(.secondary.opacity(0.7))
+            Spacer()
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
 }

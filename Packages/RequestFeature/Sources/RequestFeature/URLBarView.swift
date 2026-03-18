@@ -18,6 +18,7 @@ struct URLBarView: View {
             }
             .pickerStyle(.menu)
             .frame(width: 100)
+            .accessibilityIdentifier("httpMethodPicker")
 
             // URL TextField
             TextField("Enter URL", text: Binding(
@@ -25,6 +26,7 @@ struct URLBarView: View {
                 set: { store.send(.urlChanged($0)) }
             ))
             .textFieldStyle(.roundedBorder)
+            .accessibilityIdentifier("urlTextField")
 
             // Send Button
             Button(action: { store.send(.sendButtonTapped) }) {
@@ -41,6 +43,7 @@ struct URLBarView: View {
             .buttonStyle(.borderedProminent)
             .controlSize(.regular)
             .disabled(store.isLoading || store.request.url.isEmpty)
+            .accessibilityIdentifier("sendButton")
         }
         .padding()
     }

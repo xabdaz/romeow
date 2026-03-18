@@ -37,5 +37,6 @@ struct FeatureGridItem: View {
         .onTapGesture {
             onTap()
         }
+        .accessibilityIdentifier("feature_\(feature.title)")
     }
 }
