@@ -60,6 +60,7 @@ struct RequestConfigTabItem: View {
             }
         }
         .buttonStyle(.plain)
+        .accessibilityIdentifier("tab_\(tab.rawValue)")
     }
 }
 

@@ -16,7 +16,10 @@ public enum AccessibilityIDs {
     static let sendButton = "sendButton"
 
     // Request Config
-    static let requestConfigPicker = "requestConfigPicker"
+    static let requestConfigView = "requestConfigView"
+    static let tabBody = "tab_Body"
+    static let tabHeaders = "tab_Headers"
+    static let tabScripts = "tab_Scripts"
     static let requestBodyEditor = "requestBodyEditor"
 
     // Request Headers
