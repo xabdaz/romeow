@@ -1,19 +1,20 @@
+import SharedModels
 import SwiftUI
 
 struct ErrorStatusBar: View {
     let message: String
 
     var body: some View {
-        HStack(spacing: 8) {
+        HStack(spacing: Spacing.small) {
             Image(systemName: "exclamationmark.triangle.fill")
-                .foregroundStyle(.red)
+                .foregroundStyle(Color.rmeError)
             Text(message)
                 .lineLimit(1)
             Spacer()
         }
-        .padding(.horizontal, 16)
-        .padding(.vertical, 8)
-        .background(.red.opacity(0.1))
+        .padding(.horizontal, Spacing.large)
+        .padding(.vertical, Spacing.small)
+        .background(Color.rmeError.opacity(0.1))
         .accessibilityIdentifier("errorStatusBar")
     }
 }

@@ -9,39 +9,27 @@ public struct MockRouteRow: View {
     }
 
     public var body: some View {
-        HStack(spacing: 8) {
-            // Method badge
+        HStack(spacing: Spacing.small) {
             Text(route.method.rawValue)
-                .font(.caption.bold())
-                .foregroundStyle(methodColor)
+                .font(.rmeCaptionBold)
+                .foregroundStyle(Color.httpMethod(route.method))
                 .frame(width: 50, alignment: .center)
 
-            VStack(alignment: .leading, spacing: 2) {
+            VStack(alignment: .leading, spacing: Spacing.xxSmall) {
                 Text(route.name)
-                    .font(.system(size: 13, weight: .medium))
+                    .font(.rmeBodyMedium)
                 Text(route.path)
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
+                    .font(.rmeCaption)
+                    .foregroundStyle(Color.rmeSecondaryText)
                     .lineLimit(1)
             }
 
             Spacer()
 
-            // Status indicator
             Circle()
-                .fill(route.isEnabled ? Color.green : Color.gray)
+                .fill(route.isEnabled ? Color.rmeSuccess : Color.rmeSecondaryText)
                 .frame(width: 8, height: 8)
         }
-        .padding(.vertical, 4)
-    }
-
-    private var methodColor: Color {
-        switch route.method {
-        case .get: return .blue
-        case .post: return .green
-        case .put: return .orange
-        case .delete: return .red
-        default: return .gray
-        }
+        .padding(.vertical, Spacing.xSmall)
     }
 }

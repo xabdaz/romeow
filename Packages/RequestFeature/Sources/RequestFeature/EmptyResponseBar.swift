@@ -1,15 +1,16 @@
+import SharedModels
 import SwiftUI
 
 struct EmptyResponseBar: View {
     var body: some View {
         HStack {
             Text("No response yet")
-                .foregroundStyle(.secondary)
+                .foregroundStyle(Color.rmeSecondaryText)
             Spacer()
         }
-        .padding(.horizontal, 16)
-        .padding(.vertical, 8)
-        .background(Color.secondary.opacity(0.05))
+        .padding(.horizontal, Spacing.large)
+        .padding(.vertical, Spacing.small)
+        .background(Color.rmeQuaternaryText.opacity(0.1))
         .accessibilityIdentifier("emptyResponseBar")
     }
 }
