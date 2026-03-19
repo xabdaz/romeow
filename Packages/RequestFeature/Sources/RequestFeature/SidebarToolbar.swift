@@ -7,18 +7,12 @@ struct SidebarToolbar: View {
     var body: some View {
         HStack(spacing: 8) {
             Menu {
-                Button(action: { store.send(.addWorkspaceButtonTapped) }) {
-                    Label("New Workspace", systemImage: "briefcase")
+                Button(action: { store.send(.addRequestButtonTapped) }) {
+                    Label("New Request", systemImage: "plus")
                 }
 
                 Button(action: { store.send(.addFolderButtonTapped) }) {
                     Label("New Folder", systemImage: "folder.badge.plus")
-                }
-
-                Divider()
-
-                Button(action: { store.send(.addRequestButtonTapped) }) {
-                    Label("New Request", systemImage: "plus")
                 }
             } label: {
                 Image(systemName: "plus")

@@ -1,3 +1,4 @@
+import AppClients
 import ComposableArchitecture
 import Foundation
 import SharedModels
@@ -10,64 +11,75 @@ public struct RequestSidebarFeature {
         public var workspaces: [Workspace]
         public var selectedItem: SidebarItem?
         public var expandedFolders: Set<UUID>
+        public var isLoading: Bool
+        public var isShowingAddMenu: Bool
 
-        // Hardcoded default workspace dengan sample data
-        public init() {
-            // Sample folder dengan requests
-            let sampleFolder1 = Folder(
-                id: UUID(),
-                name: "Authentication",
-                requests: [
-                    RequestItem(id: UUID(), name: "Login", method: .post, url: "/api/auth/login"),
-                    RequestItem(id: UUID(), name: "Logout", method: .post, url: "/api/auth/logout"),
-                    RequestItem(id: UUID(), name: "Refresh Token", method: .post, url: "/api/auth/refresh")
-                ]
-            )
-
-            let sampleFolder2 = Folder(
-                id: UUID(),
-                name: "Users",
-                requests: [
-                    RequestItem(id: UUID(), name: "Get Users", method: .get, url: "/api/users"),
-                    RequestItem(id: UUID(), name: "Create User", method: .post, url: "/api/users"),
-                    RequestItem(id: UUID(), name: "Update User", method: .put, url: "/api/users/1")
-                ]
-            )
-
-            // Sample requests di root workspace
-            let rootRequests = [
-                RequestItem(id: UUID(), name: "Health Check", method: .get, url: "/health"),
-                RequestItem(id: UUID(), name: "Get Profile", method: .get, url: "/api/profile")
-            ]
-
-            let defaultWorkspace = Workspace(
-                id: UUID(),
-                name: "My Workspace",
-                folders: [sampleFolder1, sampleFolder2],
-                requests: rootRequests
-            )
-
-            self.workspaces = [defaultWorkspace]
-            self.selectedItem = nil
-            self.expandedFolders = Set([sampleFolder1.id, sampleFolder2.id])
+        public init(
+            workspaces: [Workspace] = [],
+            selectedItem: SidebarItem? = nil,
+            expandedFolders: Set<UUID> = [],
+            isLoading: Bool = false,
+            isShowingAddMenu: Bool = false
+        ) {
+            self.workspaces = workspaces
+            self.selectedItem = selectedItem
+            self.expandedFolders = expandedFolders
+            self.isLoading = isLoading
+            self.isShowingAddMenu = isShowingAddMenu
         }
     }
 
     public enum Action {
+        case onAppear
+        case workspacesLoaded([Workspace])
+        case createDefaultWorkspace
         case itemSelected(SidebarItem?)
         case folderToggled(UUID)
-        case addWorkspaceButtonTapped
-        case addFolderButtonTapped
+        case addButtonTapped
+        case addMenuDismissed
         case addRequestButtonTapped
-        case folderAdded(UUID, Folder)  // (workspaceID, folder)
-        case requestAdded(SidebarItem, RequestItem)  // (parent, request) - parent bisa folder atau workspace
+        case addFolderButtonTapped
+        case folderAdded(UUID, Folder)
+        case requestAdded(SidebarItem?, RequestItem)
     }
+
+    @Dependency(\.coreData) var coreData
 
     public init() {}
 
     public var body: some ReducerOf<Self> {
         Reduce { state, action in
             switch action {
+            case .onAppear:
+                state.isLoading = true
+                return .run { send in
+                    let workspaces = try await coreData.fetchAPIWorkspaces()
+                    await send(.workspacesLoaded(workspaces))
+                }
+
+            case let .workspacesLoaded(workspaces):
+                state.isLoading = false
+                if workspaces.isEmpty {
+                    return .send(.createDefaultWorkspace)
+                } else {
+                    state.workspaces = workspaces
+                    // Expand all folders by default
+                    for workspace in workspaces {
+                        for folder in workspace.folders {
+                            state.expandedFolders.insert(folder.id)
+                        }
+                    }
+                }
+                return .none
+
+            case .createDefaultWorkspace:
+                let defaultWorkspace = Workspace(name: "My Workspace")
+                return .run { send in
+                    _ = try await coreData.saveAPIWorkspace(defaultWorkspace)
+                    let workspaces = try await coreData.fetchAPIWorkspaces()
+                    await send(.workspacesLoaded(workspaces))
+                }
+
             case let .itemSelected(item):
                 state.selectedItem = item
                 return .none
@@ -80,50 +92,120 @@ public struct RequestSidebarFeature {
                 }
                 return .none
 
-            case .addWorkspaceButtonTapped:
-                // Coming soon - untuk sekarang tidak melakukan apa-apa
+            case .addButtonTapped:
+                state.isShowingAddMenu.toggle()
                 return .none
 
-            case .addFolderButtonTapped:
-                // Add folder ke workspace pertama (hardcoded untuk sekarang)
-                guard !state.workspaces.isEmpty else { return .none }
-                let workspaceID = state.workspaces[0].id
-                let newFolder = Folder(name: "New Folder")
-                return .send(.folderAdded(workspaceID, newFolder))
+            case .addMenuDismissed:
+                state.isShowingAddMenu = false
+                return .none
 
             case .addRequestButtonTapped:
-                // Add request ke workspace pertama (hardcoded untuk sekarang)
+                state.isShowingAddMenu = false
                 guard !state.workspaces.isEmpty else { return .none }
-                let workspaceID = state.workspaces[0].id
-                let newRequest = RequestItem(name: "New Request")
-                return .send(.requestAdded(.folder(workspaceID), newRequest))
+
+                let newRequest = RequestItem(name: "New Request", method: .get, url: "")
+
+                // Determine parent based on selected item
+                let parent: SidebarItem?
+                if let selected = state.selectedItem {
+                    switch selected {
+                    case .folder:
+                        parent = selected
+                    case .request(let requestId):
+                        // Find which folder or workspace contains this request
+                        parent = findParent(for: requestId, in: state.workspaces)
+                    }
+                } else {
+                    parent = nil // Will add to first workspace root
+                }
+
+                return .send(.requestAdded(parent, newRequest))
+
+            case .addFolderButtonTapped:
+                state.isShowingAddMenu = false
+                guard !state.workspaces.isEmpty else { return .none }
+
+                let newFolder = Folder(name: "New Folder")
+
+                // Determine target workspace based on selected item
+                let targetWorkspaceId: UUID
+                if let selected = state.selectedItem {
+                    targetWorkspaceId = findWorkspaceId(for: selected, in: state.workspaces)
+                        ?? state.workspaces[0].id
+                } else {
+                    targetWorkspaceId = state.workspaces[0].id
+                }
+
+                return .send(.folderAdded(targetWorkspaceId, newFolder))
 
             case let .folderAdded(workspaceID, folder):
-                if let index = state.workspaces.firstIndex(where: { $0.id == workspaceID }) {
-                    state.workspaces[index].folders.append(folder)
-                    state.expandedFolders.insert(folder.id)
+                return .run { send in
+                    _ = try await coreData.saveAPIFolder(folder, workspaceID)
+                    let workspaces = try await coreData.fetchAPIWorkspaces()
+                    await send(.workspacesLoaded(workspaces))
                 }
-                return .none
 
             case let .requestAdded(parent, request):
-                switch parent {
-                case let .folder(folderID):
-                    // Add request ke folder
-                    for workspaceIndex in state.workspaces.indices {
-                        if let folderIndex = state.workspaces[workspaceIndex].folders.firstIndex(where: { $0.id == folderID }) {
-                            state.workspaces[workspaceIndex].folders[folderIndex].requests.append(request)
-                            break
+                return .run { send in
+                    let folderId: UUID?
+                    if let parent = parent {
+                        switch parent {
+                        case let .folder(folderID):
+                            folderId = folderID
+                        case .request:
+                            folderId = nil
                         }
+                    } else {
+                        folderId = nil
                     }
-                case let .request(workspaceID):
-                    // Add request ke workspace root
-                    if let index = state.workspaces.firstIndex(where: { $0.id == workspaceID }) {
-                        state.workspaces[index].requests.append(request)
-                    }
+
+                    _ = try await coreData.saveAPIRequest(request, folderId)
+                    let workspaces = try await coreData.fetchAPIWorkspaces()
+                    await send(.workspacesLoaded(workspaces))
                 }
-                state.selectedItem = .request(request.id)
-                return .none
             }
         }
+    }
+
+    // MARK: - Helper Functions
+
+    private func findParent(for requestId: UUID, in workspaces: [Workspace]) -> SidebarItem? {
+        for workspace in workspaces {
+            // Check root requests
+            if workspace.requests.contains(where: { $0.id == requestId }) {
+                return nil // Root level, no folder parent
+            }
+            // Check folder requests
+            for folder in workspace.folders {
+                if folder.requests.contains(where: { $0.id == requestId }) {
+                    return .folder(folder.id)
+                }
+            }
+        }
+        return nil
+    }
+
+    private func findWorkspaceId(for item: SidebarItem, in workspaces: [Workspace]) -> UUID? {
+        switch item {
+        case let .folder(folderId):
+            for workspace in workspaces {
+                if workspace.folders.contains(where: { $0.id == folderId }) {
+                    return workspace.id
+                }
+            }
+        case let .request(requestId):
+            for workspace in workspaces {
+                if workspace.requests.contains(where: { $0.id == requestId }) {
+                    return workspace.id
+                }
+                for folder in workspace.folders {
+                    if folder.requests.contains(where: { $0.id == requestId }) {
+                        return workspace.id
+                    }
+                }
+            }
+        }
+        return nil
     }
 }
