@@ -1,4 +1,5 @@
 import ComposableArchitecture
+import Foundation
 import SharedModels
 import AppClients
 
@@ -29,7 +30,11 @@ public struct RequestFeature {
         case urlChanged(String)
         case headerAdded(key: String, value: String)
         case headerRemoved(key: String)
-        case bodyChanged(String)
+        case bodyTypeChanged(BodyType)
+        case bodyContentChanged(BodyContent)
+        case formFieldAdded(key: String, value: String)
+        case formFieldUpdated(id: UUID, key: String, value: String)
+        case formFieldRemoved(id: UUID)
         case sendButtonTapped
         case responseReceived(Result<APIResponse, Error>)
         case requestSelected(RequestItem)
@@ -43,6 +48,31 @@ public struct RequestFeature {
     @Dependency(\.urlSessionClient) var urlSessionClient
 
     public init() {}
+
+    private func updateContentTypeHeader(state: inout State, bodyType: BodyType) {
+        let contentType: String
+        switch bodyType {
+        case .none:
+            contentType = ""
+        case .json:
+            contentType = "application/json"
+        case .formUrlEncoded:
+            contentType = "application/x-www-form-urlencoded"
+        case .raw:
+            // For raw, keep existing Content-Type if user set custom, otherwise default to text/plain
+            if let existing = state.request.headers["Content-Type"], !existing.isEmpty {
+                // Don't override if user has set a custom one
+                return
+            }
+            contentType = "text/plain"
+        }
+
+        if contentType.isEmpty {
+            state.request.headers.removeValue(forKey: "Content-Type")
+        } else {
+            state.request.headers["Content-Type"] = contentType
+        }
+    }
 
     public var body: some ReducerOf<Self> {
         Scope(state: \.sidebar, action: \.sidebar) {
@@ -62,9 +92,7 @@ public struct RequestFeature {
                     id: requestItem.id,
                     name: requestItem.name,
                     method: requestItem.method,
-                    url: requestItem.url,
-                    headers: [:],
-                    body: nil
+                    url: requestItem.url
                 )
                 return .none
 
@@ -84,8 +112,53 @@ public struct RequestFeature {
                 state.request.headers.removeValue(forKey: key)
                 return .none
 
-            case let .bodyChanged(body):
-                state.request.body = body
+            case let .bodyTypeChanged(bodyType):
+                state.request.bodyType = bodyType
+                // Auto-update Content-Type header
+                updateContentTypeHeader(state: &state, bodyType: bodyType)
+                // Reset body content when type changes
+                switch bodyType {
+                case .none:
+                    state.request.bodyContent = .none
+                case .json:
+                    state.request.bodyContent = .json("")
+                case .formUrlEncoded:
+                    state.request.bodyContent = .formUrlEncoded([])
+                case .raw:
+                    state.request.bodyContent = .raw("", contentType: "text/plain")
+                }
+                return .none
+
+            case let .bodyContentChanged(content):
+                state.request.bodyContent = content
+                return .none
+
+            case let .formFieldAdded(key, value):
+                var fields: [FormField] = []
+                if case .formUrlEncoded(let existingFields) = state.request.bodyContent {
+                    fields = existingFields
+                }
+                fields.append(FormField(key: key, value: value))
+                state.request.bodyContent = .formUrlEncoded(fields)
+                return .none
+
+            case let .formFieldUpdated(id, key, value):
+                guard case .formUrlEncoded(var fields) = state.request.bodyContent else {
+                    return .none
+                }
+                if let index = fields.firstIndex(where: { $0.id == id }) {
+                    fields[index].key = key
+                    fields[index].value = value
+                    state.request.bodyContent = .formUrlEncoded(fields)
+                }
+                return .none
+
+            case let .formFieldRemoved(id):
+                guard case .formUrlEncoded(var fields) = state.request.bodyContent else {
+                    return .none
+                }
+                fields.removeAll { $0.id == id }
+                state.request.bodyContent = .formUrlEncoded(fields)
                 return .none
 
             case .sendButtonTapped:

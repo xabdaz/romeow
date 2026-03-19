@@ -6,7 +6,13 @@ public struct APIRequest: Equatable, Codable, Identifiable, Sendable {
     public var method: HTTPMethod
     public var url: String
     public var headers: [String: String]
-    public var body: String?
+    public var bodyType: BodyType
+    public var bodyContent: BodyContent
+
+    /// Backward compatibility computed property
+    public var body: String? {
+        return bodyContent.rawString
+    }
 
     public init(
         id: UUID = UUID(),
@@ -14,14 +20,16 @@ public struct APIRequest: Equatable, Codable, Identifiable, Sendable {
         method: HTTPMethod = .get,
         url: String = "",
         headers: [String: String] = [:],
-        body: String? = nil
+        bodyType: BodyType = .none,
+        bodyContent: BodyContent = .none
     ) {
         self.id = id
         self.name = name
         self.method = method
         self.url = url
         self.headers = headers
-        self.body = body
+        self.bodyType = bodyType
+        self.bodyContent = bodyContent
     }
 }
 
