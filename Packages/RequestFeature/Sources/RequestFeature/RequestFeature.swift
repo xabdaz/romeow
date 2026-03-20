@@ -29,6 +29,7 @@ public struct RequestFeature {
         case methodChanged(HTTPMethod)
         case urlChanged(String)
         case headerAdded(key: String, value: String)
+        case headerUpdated(oldKey: String, newKey: String, value: String)
         case headerRemoved(key: String)
         case bodyTypeChanged(BodyType)
         case bodyContentChanged(BodyContent)
@@ -106,6 +107,17 @@ public struct RequestFeature {
 
             case let .headerAdded(key, value):
                 state.request.headers[key] = value
+                return .none
+
+            case let .headerUpdated(oldKey, newKey, value):
+                // Remove old key if it changed
+                if oldKey != newKey {
+                    state.request.headers.removeValue(forKey: oldKey)
+                }
+                // Set new key-value (only if key is not empty)
+                if !newKey.isEmpty {
+                    state.request.headers[newKey] = value
+                }
                 return .none
 
             case let .headerRemoved(key):

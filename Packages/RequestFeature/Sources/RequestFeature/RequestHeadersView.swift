@@ -3,62 +3,70 @@ import SwiftUI
 
 struct RequestHeadersView: View {
     let store: StoreOf<RequestFeature>
-    @State private var newKey = ""
-    @State private var newValue = ""
+
+    private var sortedHeaders: [(key: String, value: String)] {
+        store.request.headers.sorted { $0.key < $1.key }
+    }
 
     var body: some View {
         VStack(spacing: 0) {
-            // Add Header Input (di atas)
-            HStack(spacing: 8) {
-                TextField("Key", text: $newKey)
-                    .textFieldStyle(.roundedBorder)
-                    .accessibilityIdentifier("headerKeyField")
-                TextField("Value", text: $newValue)
-                    .textFieldStyle(.roundedBorder)
-                    .accessibilityIdentifier("headerValueField")
-                Button("Add") {
-                    guard !newKey.isEmpty else { return }
-                    store.send(.headerAdded(key: newKey, value: newValue))
-                    newKey = ""
-                    newValue = ""
+            // Headers List - directly editable
+            List {
+                ForEach(sortedHeaders, id: \.key) { header in
+                    HStack(spacing: 8) {
+                        TextField("Key", text: Binding(
+                            get: { header.key },
+                            set: { newKey in
+                                store.send(.headerUpdated(
+                                    oldKey: header.key,
+                                    newKey: newKey,
+                                    value: header.value
+                                ))
+                            }
+                        ))
+                        .textFieldStyle(.roundedBorder)
+                        .font(.system(.body, design: .monospaced))
+
+                        TextField("Value", text: Binding(
+                            get: { header.value },
+                            set: { newValue in
+                                store.send(.headerUpdated(
+                                    oldKey: header.key,
+                                    newKey: header.key,
+                                    value: newValue
+                                ))
+                            }
+                        ))
+                        .textFieldStyle(.roundedBorder)
+                        .font(.system(.body, design: .monospaced))
+                        .foregroundStyle(.secondary)
+
+                        Button(action: { store.send(.headerRemoved(key: header.key)) }) {
+                            Image(systemName: "xmark.circle.fill")
+                                .foregroundStyle(.secondary)
+                        }
+                        .buttonStyle(.plain)
+                    }
+                    .padding(.vertical, 4)
                 }
-                .disabled(newKey.isEmpty)
+
+                // Add Header Button sebagai row terakhir
+                Button(action: {
+                    store.send(.headerAdded(key: "", value: ""))
+                }) {
+                    HStack {
+                        Image(systemName: "plus.circle.fill")
+                            .foregroundColor(.accentColor)
+                        Text("Add Header")
+                            .foregroundStyle(.primary)
+                        Spacer()
+                    }
+                    .padding(.vertical, 8)
+                }
+                .buttonStyle(.plain)
                 .accessibilityIdentifier("addHeaderButton")
             }
-            .padding(.horizontal, 12)
-            .padding(.vertical, 8)
-
-            Divider()
-
-            // Headers List
-            if store.request.headers.isEmpty {
-                VStack {
-                    Spacer()
-                    Text("No headers")
-                        .foregroundStyle(.secondary)
-                    Spacer()
-                }
-                .frame(maxWidth: .infinity, maxHeight: .infinity)
-            } else {
-                List {
-                    ForEach(Array(store.request.headers.sorted(by: { $0.key < $1.key })), id: \.key) { key, value in
-                        HStack {
-                            Text(key)
-                                .font(.system(.body, design: .monospaced))
-                            Spacer()
-                            Text(value)
-                                .font(.system(.body, design: .monospaced))
-                                .foregroundStyle(.secondary)
-                            Button(action: { store.send(.headerRemoved(key: key)) }) {
-                                Image(systemName: "xmark.circle.fill")
-                                    .foregroundStyle(.secondary)
-                            }
-                            .buttonStyle(.plain)
-                        }
-                    }
-                }
-                .listStyle(.plain)
-            }
+            .listStyle(.plain)
         }
     }
 }
