@@ -1,47 +1,39 @@
 import ComposableArchitecture
+import SharedModels
 import SwiftUI
 
-struct RequestHeadersView: View {
+struct FormUrlEncodedBodyView: View {
     let store: StoreOf<RequestFeature>
 
-    private var sortedHeaders: [(key: String, value: String)] {
-        store.request.headers.sorted { $0.key < $1.key }
+    private var fields: [FormField] {
+        if case .formUrlEncoded(let fields) = store.request.bodyContent {
+            return fields
+        }
+        return []
     }
 
     var body: some View {
         VStack(spacing: 0) {
-            // Headers List - directly editable
+            // Fields List - directly editable
             List {
-                ForEach(sortedHeaders, id: \.key) { header in
+                ForEach(fields) { field in
                     HStack(spacing: 8) {
                         TextField("Key", text: Binding(
-                            get: { header.key },
-                            set: { newKey in
-                                store.send(.headerUpdated(
-                                    oldKey: header.key,
-                                    newKey: newKey,
-                                    value: header.value
-                                ))
-                            }
+                            get: { field.key },
+                            set: { store.send(.formFieldUpdated(id: field.id, key: $0, value: field.value)) }
                         ))
                         .textFieldStyle(.roundedBorder)
                         .font(.system(.body, design: .monospaced))
 
                         TextField("Value", text: Binding(
-                            get: { header.value },
-                            set: { newValue in
-                                store.send(.headerUpdated(
-                                    oldKey: header.key,
-                                    newKey: header.key,
-                                    value: newValue
-                                ))
-                            }
+                            get: { field.value },
+                            set: { store.send(.formFieldUpdated(id: field.id, key: field.key, value: $0)) }
                         ))
                         .textFieldStyle(.roundedBorder)
                         .font(.system(.body, design: .monospaced))
                         .foregroundStyle(.secondary)
 
-                        Button(action: { store.send(.headerRemoved(key: header.key)) }) {
+                        Button(action: { store.send(.formFieldRemoved(id: field.id)) }) {
                             Image(systemName: "xmark.circle.fill")
                                 .foregroundStyle(.secondary)
                         }
@@ -50,21 +42,21 @@ struct RequestHeadersView: View {
                     .padding(.vertical, 4)
                 }
 
-                // Add Header Button sebagai row terakhir
+                // Add Field Button sebagai row terakhir
                 Button(action: {
-                    store.send(.headerAdded(key: "", value: ""))
+                    store.send(.formFieldAdded(key: "", value: ""))
                 }) {
                     HStack {
                         Image(systemName: "plus.circle.fill")
                             .foregroundColor(.accentColor)
-                        Text("Add Header")
+                        Text("Add Field")
                             .foregroundStyle(.primary)
                         Spacer()
                     }
                     .padding(.vertical, 8)
                 }
                 .buttonStyle(.plain)
-                .accessibilityIdentifier("addHeaderButton")
+                .accessibilityIdentifier("addFormFieldButton")
             }
             .listStyle(.plain)
         }

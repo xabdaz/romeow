@@ -12,6 +12,28 @@ public struct URLSessionClient: Sendable {
     }
 }
 
+// MARK: - Helper Functions
+
+private func encodeBodyContent(_ content: BodyContent) -> Data? {
+    switch content {
+    case .none:
+        return nil
+    case .json(let string):
+        return string.data(using: .utf8)
+    case .formUrlEncoded(let fields):
+        let encodedPairs = fields.compactMap { field -> String? in
+            guard !field.key.isEmpty else { return nil }
+            let encodedKey = field.key.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? field.key
+            let encodedValue = field.value.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? field.value
+            return "\(encodedKey)=\(encodedValue)"
+        }
+        let formString = encodedPairs.joined(separator: "&")
+        return formString.data(using: .utf8)
+    case .raw(let string, _):
+        return string.data(using: .utf8)
+    }
+}
+
 // MARK: - Dependency
 
 extension URLSessionClient: DependencyKey {
@@ -23,8 +45,10 @@ extension URLSessionClient: DependencyKey {
         var urlRequest = URLRequest(url: url)
         urlRequest.httpMethod = request.method.rawValue
         request.headers.forEach { urlRequest.setValue($1, forHTTPHeaderField: $0) }
-        if let body = request.body {
-            urlRequest.httpBody = body.data(using: .utf8)
+
+        // Handle body content based on type
+        if let bodyData = encodeBodyContent(request.bodyContent) {
+            urlRequest.httpBody = bodyData
         }
 
         let start = Date()
